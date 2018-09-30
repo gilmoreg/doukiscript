@@ -32,31 +32,31 @@ const addImportForm = () => {
    </form>
 `;
 
-const element = document.querySelector('#content');
-element.insertAdjacentHTML('afterend', html);
-const importButton = document.querySelector('#douki-import');
-importButton.addEventListener('click', function(e) {
+  const element = document.querySelector('#content');
+  element.insertAdjacentHTML('afterend', html);
+  const importButton = document.querySelector('#douki-import');
+  importButton.addEventListener('click', function (e) {
     e.preventDefault();
     console.log('importing from anilist');
     const csrfToken = document.querySelector('meta[name~="csrf_token"]').getAttribute("content");
     fetch('/ownlist/anime/edit.json', {
         method: 'post',
         body: JSON.stringify({
-            csrf_token: csrfToken,
-            anime_id: 36904,
-            num_watched_episodes: 9,
-            status: 1,
+          csrf_token: csrfToken,
+          anime_id: 36904,
+          num_watched_episodes: 9,
+          status: 1,
         })
-    })
-        .then((res) => res.json())
-        .then((res) => console.log(res))
-        .catch(err => console.error(err));
-});
+      })
+      .then((res) => res.json())
+      .then((res) => console.log(res))
+      .catch(err => console.error(err));
+  });
 }
 
-(function() {
-'use strict';
-if (window.location.pathname === '/import.php') {
+(function () {
+  'use strict';
+  if (window.location.pathname === '/import.php') {
     addImportForm();
-}
+  }
 })();
