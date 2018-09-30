@@ -7,29 +7,13 @@
 
 const addImportForm = () => {
   const html = `
-   <h1 class="h1">Import From Anilist</h1>
-   <form id="douki-anilist-import">
-      <ul style="list-style: none;">
-        <li>
-          <label>
-              Username: <input type="text" id="douki-anilist-username" />
-          </label>
-        </li>
-        <li>
-          <label>
-              Full Sync: <input type="checkbox" id="douki-fullsync" />
-          </label>
-        </li>
-        <li>
-          <label>
-              Sync on Page Load: <input type="checkbox" id="douki-sync-pageload" />
-          </label>
-        </li>
-        <li>
-          <button id="douki-import">Import</button>
-        </li>
-      </ul>
-   </form>
+   <div>
+     <h1 class="h1">Import From Anilist</h1>
+     <form id="douki-anilist-import" style="padding: 5px 0px 10px 0px">
+       <p style="margin: 10px"><label>Anilist Username: <input type="text" id="douki-anilist-username" /></label></p>
+       <p style="margin: 10px"><button id="douki-import">Import</button></p>
+     </form>
+   </div>
 `;
 
   const element = document.querySelector('#content');
