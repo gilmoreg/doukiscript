@@ -52,10 +52,29 @@ const addImportForm = () => {
       .then((res) => console.log(res))
       .catch(err => console.error(err));
   });
-}
+};
+
+const anilistSync = () => {
+  const config = JSON.parse(localStorage.getItem('douki-settings'));
+  if (!config && window.location.pathname !== '/import.php') {
+    window.location.replace('https://myanimelist.net/import.php');
+  }
+};
 
 (function () {
   'use strict';
+  const selector = '.header-menu-dropdown > ul > li:last-child';
+  const dropdown = document.querySelector(selector);
+  if (dropdown) {
+    const html = '<li><a aria-role="button" id="douki-sync">Import from Anilist</a></li>';
+    dropdown.insertAdjacentHTML('afterend', html);
+    const link = document.querySelector('#douki-sync');
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      anilistSync();
+    });
+  }
+
   if (window.location.pathname === '/import.php') {
     addImportForm();
   }
