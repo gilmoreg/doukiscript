@@ -157,86 +157,76 @@ const Anilist = (() => {
   };
 })();
 
-const editAnime = (anime, csrf_token) =>
-  fetch('/ownlist/anime/edit.json', {
+const malCall = (type, action, data, csrf_token) =>
+  fetch(`/ownlist/${type}/${action}.json`, {
     method: 'post',
-    body: JSON.stringify(Object.assign(anime, {
+    body: JSON.stringify(Object.assign(data, {
       csrf_token
     }))
   })
   .then((res) => res.json());
 
-const fakeXml = `
-<?xml version="1.0" encoding="UTF-8" ?>
-  <myinfo>
-    <user_id>5263009</user_id>
-    <user_name>solitethos</user_name>
-    <user_export_type>1</user_export_type>
-    <user_total_anime>671</user_total_anime>
-    <user_total_watching>26</user_total_watching>
-    <user_total_completed>413</user_total_completed>
-    <user_total_onhold>19</user_total_onhold>
-    <user_total_dropped>83</user_total_dropped>
-    <user_total_plantowatch>130</user_total_plantowatch>
-  </myinfo>
+const editAnime = (data, csrf_token) => malCall('anime', 'edit', data, csrf_token);
+const addAnime = (data, csrf_token) => malCall('anime', 'add', data, csrf_token);
+const editManga = (data, csrf_token) => malCall('manga', 'edit', data, csrf_token);
+const addManga = (data, csrf_token) => malCall('manga', 'add', data, csrf_token);
 
-  <myanimelist>
-    <anime>
-      <series_animedb_id>36904</series_animedb_id>
-      <series_title><![CDATA[Aggressive Retsuko (ONA)]]></series_title>
-      <series_type>ONA</series_type>
-      <series_episodes>10</series_episodes>
-      <my_id>0</my_id>
-      <my_watched_episodes>10</my_watched_episodes>
-      <my_start_date>2018-05-04</my_start_date>
-      <my_finish_date>0000-00-00</my_finish_date>
-      <my_rated></my_rated>
-      <my_score>0</my_score>
-      <my_dvd></my_dvd>
-      <my_storage></my_storage>
-      <my_status>Watching</my_status>
-      <my_comments><![CDATA[]]></my_comments>
-      <my_times_watched>0</my_times_watched>
-      <my_rewatch_value></my_rewatch_value>
-      <my_tags><![CDATA[]]></my_tags>
-      <my_rewatching>0</my_rewatching>
-      <my_rewatching_ep>0</my_rewatching_ep>
-      <update_on_import>1</update_on_import>
-    </anime>
-  </myanimelist>
-`;
+const getStatus = (status) => {
+  // MAL status: 1/watching, 2/completed, 3/onhold, 4/dropped, 6/plantowatch
+  switch (status.trim()) {
+    case 'CURRENT':
+      return 1;
+    case 'COMPLETED':
+      return 2;
+    case 'PAUSED':
+      return 3;
+    case 'DROPPED':
+      return 4;
+    case 'PLANNING':
+      return 6;
+    default:
+      throw new Error(`unknown status "${status}"`);
+  }
+};
 
-const uploadTest = () => {
-  const csrfToken = document.querySelector('meta[name~="csrf_token"]').getAttribute("content");
-  const formData = new FormData();
-  const blob = new Blob([fakeXml], {
-    type: 'text/xml'
-  });
-  formData.append('importtype', '3');
-  formData.append('file', new Blob([], {
-    type: 'application/octet-stream'
-  }), '');
-  formData.append('mal', blob, 'sample.xml');
-  formData.append('subimport', 'Import Data');
-  formData.append('csrf_token', csrfToken);
-  return fetch('/import.php', {
-      method: 'post',
-      headers: {
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-      },
-      mode: 'cors',
-      body: formData,
-    })
-    .then((res) => res.text());
-}
+const createMALData = (anilistData) => {
+  const result = {
+    anime_id: anilistData.id,
+    status: getStatus(anilistData.status),
+    score: anilistData.score || 0,
+    num_watched_episodes: anilistData.progress || 0,
+    num_watched_times: anilistData.rewatched || 0,
+    num_watched_times = anilistData.rewatched || 0
+  };
+  if (anilistData.startedAt) {
+    result.start_date = {
+      year: anilistData.startedAt.year || 0,
+      month: anilistData.startedAt.month || 0,
+      day: anilistData.startedAt.day || 0
+    }
+  }
+  if (anilistData.completedAt) {
+    result.finish_date = {
+      year: anilistData.completedAt.year || 0,
+      month: anilistData.completedAt.month || 0,
+      day: anilistData.completedAt.day || 0
+    }
+  }
+  return result;
+};
+
 
 const anilistSync = async () => {
   const csrfToken = document.querySelector('meta[name~="csrf_token"]').getAttribute("content");
-  // const anilistUser = document.querySelector('#douki-anilist-username').value;
-  // const list = await Anilist.getList(anilistUser);
-  // console.log(list);
-  const test = await uploadTest();
-  console.log(test);
+  const anilistUser = document.querySelector('#douki-anilist-username').value;
+  const list = await Anilist.getList(anilistUser);
+  console.log(list);
+  // const test = list[20];
+  // console.log(test);
+  // const result = await editAnime(createMALData(test), csrfToken);
+
+  const log = document.querySelector('#douki-sync-log');
+  // log.innerHTML += `<li>${test.title}</li>`;
 };
 
 const addImportForm = () => {
@@ -247,6 +237,8 @@ const addImportForm = () => {
        <p style="margin: 10px"><label>Anilist Username: <input type="text" id="douki-anilist-username" /></label></p>
        <p style="margin: 10px"><button id="douki-import">Import</button></p>
      </form>
+     <br />
+     <ul id="douki-sync-log" style="list-type: none;"></ul>
    </div>
 `;
 
@@ -257,10 +249,13 @@ const addImportForm = () => {
     e.preventDefault();
     anilistSync();
   });
-  const config = JSON.parse(localStorage.getItem('douki-settings'));
-  if (config && config.username) {
-    const textBox = document.querySelector('#douki-anilist-username');
-    textBox.value = config.username;
+  const textBox = document.querySelector('#douki-anilist-username');
+  textBox.addEventListener('change', function (e) {
+    localStorage.setItem('douki-settings', JSON.stringify(e.target.value));
+  });
+  const username = JSON.parse(localStorage.getItem('douki-settings'));
+  if (username) {
+    textBox.value = username;
   }
 };
 
