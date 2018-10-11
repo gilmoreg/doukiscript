@@ -157,6 +157,9 @@ const Anilist = (() => {
   };
 })();
 
+const jikanGetList = (username) =>
+  fetch(`https://api.jikan.moe/v3/user/${username}/animelist/all`).then(res => res.json());
+
 const malCall = (type, action, data, csrf_token) =>
   fetch(`/ownlist/${type}/${action}.json`, {
     method: 'post',
@@ -196,7 +199,7 @@ const createMALData = (anilistData) => {
     score: anilistData.score || 0,
     num_watched_episodes: anilistData.progress || 0,
     num_watched_times: anilistData.rewatched || 0,
-    num_watched_times = anilistData.rewatched || 0
+    num_watched_times: anilistData.rewatched || 0
   };
   if (anilistData.startedAt) {
     result.start_date = {
@@ -219,14 +222,16 @@ const createMALData = (anilistData) => {
 const anilistSync = async () => {
   const csrfToken = document.querySelector('meta[name~="csrf_token"]').getAttribute("content");
   const anilistUser = document.querySelector('#douki-anilist-username').value;
+  const malUsername = document.querySelector('.header-profile-link').innerText;
+  const malList = await jikanGetList(malUsername);
   const list = await Anilist.getList(anilistUser);
-  console.log(list);
-  // const test = list[20];
-  // console.log(test);
-  // const result = await editAnime(createMALData(test), csrfToken);
+  console.log(malList);
+  const test = list[700];
+  console.log(test);
+  const result = await editAnime(createMALData(test), csrfToken);
 
   const log = document.querySelector('#douki-sync-log');
-  // log.innerHTML += `<li>${test.title}</li>`;
+  log.innerHTML += `<li>${test.title}</li>`;
 };
 
 const addImportForm = () => {
