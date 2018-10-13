@@ -157,8 +157,8 @@ const Anilist = (() => {
   };
 })();
 
-const jikanGetList = (username) =>
-  fetch(`https://api.jikan.moe/v3/user/${username}/animelist/all`).then(res => res.json());
+const getMALList = (username) =>
+  fetch(`https://myanimelist.net/animelist/${username}/load.json`).then(res => res.json());
 
 const malCall = (type, action, data, csrf_token) =>
   fetch(`/ownlist/${type}/${action}.json`, {
@@ -289,6 +289,67 @@ const addDropDownItem = () => {
 
 /*
 ADD
-fetch("https://myanimelist.net/ownlist/anime/add.json", {"credentials":"include","headers":{},"referrer":"https://myanimelist.net/addtolist.php?hidenav=1","referrerPolicy":"no-referrer-when-downgrade","body":"{\"anime_id\":34577,\"status\":1,\"score\":0,\"num_watched_episodes\":0,\"storage_value\":0,\"storage_type\":0,\"start_date\":{\"year\":0,\"month\":0,\"day\":0},\"finish_date\":{\"year\":0,\"month\":0,\"day\":0},\"num_watched_times\":0,\"rewatch_value\":0,\"csrf_token\":\"c53ffebe02a2e5f7cc08224528a1c48708bc1167\"}","method":"POST","mode":"cors"});
+fetch("https://myanimelist.net/ownlist/anime/add.json",
+  {
+    "credentials":"include",
+    "headers":{},
+    "referrer":"https://myanimelist.net/addtolist.php?hidenav=1",
+    "referrerPolicy":"no-referrer-when-downgrade",
+    "body":"
+      {\"anime_id\":34577,
+      \"status\":1,
+      \"score\":0,
+      \"num_watched_episodes\":0,
+      \"storage_value\":0,
+      \"storage_type\":0,
+      \"start_date\":{\"year\":0,\"month\":0,\"day\":0},
+      \"finish_date\":{\"year\":0,\"month\":0,\"day\":0},
+      \"num_watched_times\":0,
+      \"rewatch_value\":0,
+      \"csrf_token\":\"c53ffebe02a2e5f7cc08224528a1c48708bc1167\"
+    }",
+    "method":"POST",
+    "mode":"cors"
+  });
 IMPORT
+
+a
+anime_airing_status: 2
+anime_end_date_string: "04-24-99"
+anime_id: 1
+anime_image_path: "https://myanimelist.cdn-dena.com/r/96x136/images/anime/4/19644.jpg?s=58990770819ae823d1cdf8af63383b96"
+anime_licensors: null
+anime_media_type_string: "TV"
+anime_mpaa_rating_string: "R"
+anime_num_episodes: 26
+anime_season: null
+anime_start_date_string: "04-03-98"
+anime_studios: null
+anime_title: "Cowboy Bebop"
+anime_url: "/anime/1/Cowboy_Bebop"
+days_string: null
+finish_date_string: null
+has_episode_video: true
+has_promotion_video: true
+has_video: true
+is_added_to_list: true
+is_rewatching: 0
+num_watched_episodes: 26
+priority_string: null
+score: 10
+start_date_string: null
+status: 2
+storage_string: ""
+tags: ""
+video_url: "/anime/1/Cowboy_Bebop/video"
+__proto__: Object
+b
+anime_id: 1
+finish_date: {year: 0, month: 0, day: 0}
+num_watched_episodes: 26
+num_watched_times: 0
+score: 10
+start_date: {year: 0, month: 0, day: 0}
+status: 2
+__proto__: Object
 */
