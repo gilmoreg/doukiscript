@@ -5,58 +5,43 @@
 // @include https://myanimelist.net/*
 // ==/UserScript==
 
-const Anilist = (() => {
-  /*
-    Anilist response takes the following form:
-    data: {
-      anime: {
-        lists: [
-          { entries: [] },
-          { entries: [] },
-          etc.
-        },
-      },
-      manga: {
-        lists: [
-          { entries: [] },
-          { entries: [] },
-          etc.
-        },
-      }
-    }
-    'data' is stripped off by the fetch function, and flatten() is called once for
-    anime and once for manga
-    flatten() combines the lists (completed, planning, all custom lists, etc)
-    and creates one big flat array of items
-  */
-  const flatten = obj =>
-    // Outer reduce concats arrays built by inner reduce
-    Object.keys(obj).reduce((accumulator, list) =>
-      // Inner reduce builds an array out of the lists
-      accumulator.concat(Object.keys(obj[list]).reduce((acc2, item) =>
-        acc2.concat(obj[list][item]), [])), []);
+// Utility Functions
+const logMessage = (msg) =>
+  document.querySelector('#douki-sync-log').innerHTML += `<li>${msg}</li>`;
 
-  // Remove duplicates from array
-  const uniqify = (arr) => {
-    const seen = new Set();
-    return arr.filter(item => (seen.has(item.media.idMal) ? false : seen.add(item.media.idMal)));
-  };
+const clearLog = () =>
+  document.querySelector('#douki-sync-log').innerHTML = '';
 
-  const anilistCall = (query, variables) =>
-    fetch('https://graphql.anilist.co', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify({
-        query,
-        variables,
-      }),
-    });
+const sleep = (ms) => new Promise(resolve => setTimeout(() => resolve(), ms));
 
-  const fetchList = userName =>
-    anilistCall(`
+const flatten = obj =>
+  // Outer reduce concats arrays built by inner reduce
+  Object.keys(obj).reduce((accumulator, list) =>
+    // Inner reduce builds an array out of the lists
+    accumulator.concat(Object.keys(obj[list]).reduce((acc2, item) =>
+      acc2.concat(obj[list][item]), [])), []);
+
+const uniqify = (arr) => {
+  const seen = new Set();
+  return arr.filter(item => (seen.has(item.media.idMal) ? false : seen.add(item.media.idMal)));
+};
+
+// Anilist Functions
+const anilistCall = (query, variables) =>
+  fetch('https://graphql.anilist.co', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({
+      query,
+      variables,
+    }),
+  });
+
+const fetchList = userName =>
+  anilistCall(`
       query ($userName: String) {
         anime: MediaListCollection(userName: $userName, type: ANIME) {
           lists {
@@ -113,52 +98,48 @@ const Anilist = (() => {
         }
       }
     `, {
-      userName
-    })
-    .then(res => res.json())
-    .then(res => res.data)
-    .then(res => ({
-      anime: uniqify(flatten(res.anime.lists)),
-      manga: uniqify(flatten(res.manga.lists)),
-    }));
+    userName
+  })
+  .then(res => res.json())
+  .then(res => res.data)
+  .then(res => ({
+    anime: uniqify(flatten(res.anime.lists)),
+    manga: uniqify(flatten(res.manga.lists)),
+  }));
 
-  const sanitize = (item, type) => ({
-    type,
-    progress: item.progress,
-    progressVolumes: item.progressVolumes,
-    startedAt: {
-      year: item.startedAt.year || 0,
-      month: item.startedAt.month || 0,
-      day: item.startedAt.day || 0,
-    },
-    completedAt: {
-      year: item.completedAt.year || 0,
-      month: item.completedAt.month || 0,
-      day: item.completedAt.day || 0,
-    },
-    repeat: item.repeat,
-    status: item.status,
-    score: item.score,
-    id: item.media.idMal,
-    title: item.media.title.romaji,
+const sanitize = (item, type) => ({
+  type,
+  progress: item.progress,
+  progressVolumes: item.progressVolumes,
+  startedAt: {
+    year: item.startedAt.year || 0,
+    month: item.startedAt.month || 0,
+    day: item.startedAt.day || 0,
+  },
+  completedAt: {
+    year: item.completedAt.year || 0,
+    month: item.completedAt.month || 0,
+    day: item.completedAt.day || 0,
+  },
+  repeat: item.repeat,
+  status: item.status,
+  score: item.score,
+  id: item.media.idMal,
+  title: item.media.title.romaji,
+});
+
+const getAnilistList = username =>
+  fetchList(username)
+  .then(lists => ({
+    anime: lists.anime.map(item => sanitize(item, 'anime')).filter(item => item.id),
+    manga: lists.manga.map(item => sanitize(item, 'manga')).filter(item => item.id),
+  }))
+  .catch((err) => {
+    console.error('Anilist getList error', err);
+    return `No data found for user ${username}`;
   });
 
-  return {
-    getList: username =>
-      fetchList(username)
-      .then(lists => [
-        ...lists.anime.map(item => sanitize(item, 'anime')).filter(item => item.id),
-        ...lists.manga.map(item => sanitize(item, 'manga')).filter(item => item.id),
-      ])
-      .catch((err) => {
-        console.error('Anilist getList error', err);
-        return `No data found for user ${username}`;
-      }),
-  };
-})();
-
-const sleep = (ms) => new Promise(resolve => setTimeout(() => resolve(), ms));
-
+// MAL Functions
 const getMALList = async (type, username, list = [], page = 1) => {
   const offset = (page - 1) * 300;
   const nextList = await fetch(`https://myanimelist.net/${type}list/${username}/load.json?offset=${offset}`).then(res => res.json());
@@ -176,10 +157,7 @@ const malEdit = (type, data) =>
   })
   .then((res) => {
     if (res.status === 200) return res;
-    throw new Error({
-      res,
-      data
-    });
+    throw new Error(JSON.stringify(data));
   });
 
 const malAdd = (type, data) =>
@@ -194,10 +172,7 @@ const malAdd = (type, data) =>
   })
   .then((res) => {
     if (res.status === 200) return res;
-    throw new Error({
-      res,
-      data
-    });
+    throw new Error(JSON.stringify(data));
   });
 
 const getStatus = (status) => {
@@ -216,7 +191,7 @@ const getStatus = (status) => {
     default:
       throw new Error(`unknown status "${status}"`);
   }
-};
+}
 
 // TODO find out if this respects internationalization
 const buildDateString = (date) =>
@@ -242,7 +217,6 @@ const createMALData = (anilistData, csrf_token) => {
   if (anilistData.type === 'anime') {
     result.num_watched_episodes = anilistData.progress || 0;
     result.num_watched_times = anilistData.repeat || 0;
-    // result.rewatch_value = anilistData.repeat || 0;
   } else {
     result.num_read_chapters = anilistData.progress || 0;
     result.num_read_volumes = anilistData.progressVolumes || 0;
@@ -286,95 +260,86 @@ const shouldUpdate = (mal, al) =>
     }
   });
 
-const anilistSync = async (type, malUsername, anilistList) => {
+const syncList = async (type, list, fn) => {
+  let itemCount = 0;
+  for (let item of list) {
+    await sleep(500);
+    try {
+      await fn(type, item);
+      itemCount++;
+    } catch (e) {
+      console.error(e);
+      const itemId = item[`${type}_id`];
+      logMessage(`Error adding ${type} <a href="https://myanimelist.net/${type}/${itemId}>${itemId}</a>. Try adding it manually.`);
+    }
+  }
+  return itemCount;
+}
+
+const malSync = async (type, malUsername, anilistList, csrfToken) => {
   logMessage(`Fetching MyAnimeList ${type} list...`);
   const malAnimeList = await getMALList(type, malUsername);
   logMessage(`Fetched MyAnimeList ${type} list.`);
   const malHashMap = createMALHashMap(malAnimeList, type);
-  const addList = anilistList.filter(item => !malHashMap[item[`${type}_id`]]);
-  const syncList = anilistList.filter(item => {
+  const anilistInMalFormat = anilistList.map(item => createMALData(item, csrfToken));
+  const addList = anilistInMalFormat.filter(item => !malHashMap[item[`${type}_id`]]);
+  const updateList = anilistInMalFormat.filter(item => {
     const malItem = malHashMap[item[`${type}_id`]];
     // Do not try to sync items in the addList
     if (!malItem) return false;
     return shouldUpdate(malItem, item);
   });
 
-  let addedItems = 0;
-  let updatedItems = 0;
-
   logMessage(`Adding ${addList.length} ${type} items.`);
-
-  for (let item of addList) {
-    await sleep(500);
-    try {
-      await malAdd(type, item);
-      addedItems++;
-    } catch (e) {
-      console.error(JSON.stringify(e));
-      const itemId = item[`${type}_id`];
-      logMessage(`Error adding ${type} <a href="https://myanimelist.net/${type}/${itemId}>${itemId}</a>. Try adding it manually.`);
-    }
-  }
-
+  const addedItems = await syncList(type, addList, malAdd);
   logMessage(`Added ${addedItems} ${type} items`);
-  logMessage(`Updating ${syncList.length} ${type} items.`);
 
-  for (let item of syncList) {
-    await sleep(500);
-    try {
-      await malEdit(type, item);
-      updatedItems++;
-    } catch (e) {
-      console.error(JSON.stringify(e));
-      const itemId = item[`${type}_id`];
-      logMessage(`Error updating ${type} ${itemId}`);
-    }
-  }
+  logMessage(`Updating ${updateList.length} ${type} items.`);
+  const updatedItems = await syncList(type, updateList, malEdit);
   logMessage(`Updated ${updatedItems} ${type} items`);
+
   logMessage('Import complete.');
 };
 
-const logMessage = (msg) =>
-  document.querySelector('#douki-sync-log').innerHTML += `<li>${msg}</li>`;
-
-const clearLog = () =>
-  document.querySelector('#douki-sync-log').innerHTML = '';
-
+// Main business logic
 const sync = async (e) => {
   e.preventDefault();
   console.clear();
   clearLog();
   logMessage(`Fetching data from Anilist...`);
   const anilistUser = document.querySelector('#douki-anilist-username').value;
-  const anilistList = await Anilist.getList(anilistUser);
-  if (!anilistList || !anilistList.length) {
+  const anilistList = await getAnilistList(anilistUser);
+  if (!anilistList) {
     logMessage(`No data found for user ${anilistUser}.`);
     return;
   }
   logMessage(`Fetched Anilist data.`);
   const csrfToken = document.querySelector('meta[name~="csrf_token"]').getAttribute("content");
-  const anilistInMalFormat = anilistList.map(item => createMALData(item, csrfToken));
-  const anilistAnimeList = anilistInMalFormat.filter(item => item.anime_id);
-  const anilistMangaList = anilistInMalFormat.filter(item => item.manga_id);
   const malUsername = document.querySelector('.header-profile-link').innerText;
 
-  await anilistSync('anime', malUsername, anilistAnimeList);
-  await anilistSync('manga', malUsername, anilistMangaList);
+  if (anilistList.anime && anilistList.anime.length) {
+    await malSync('anime', malUsername, anilistList.anime, csrfToken);
+  }
+  if (anilistList.manga && anilistList.manga.length) {
+    await malSync('manga', malUsername, anilistList.manga, csrfToken);
+  }
 }
 
+// DOM functions
 const addImportForm = () => {
+  if (document.querySelector('#douki-form')) return;
   const html = `
-   <div>
-     <h1 class="h1">Import From Anilist</h1>
-     <form id="douki-anilist-import" style="padding: 5px 0px 10px 0px">
-       <p style="margin: 10px"><label>Anilist Username: <input type="text" id="douki-anilist-username" /></label></p>
-       <p style="margin: 10px"><button id="douki-import">Import</button></p>
-     </form>
-     <br />
-     <p>Please be patient. If the import goes any faster MAL will ban you for violating the TOS.</p>
-     <ul id="douki-sync-log" style="list-type: none;"></ul>
-   </div>
-`;
+      <div id="douki-form">
+        <h1 class="h1">Import From Anilist</h1>
+        <form id="douki-anilist-import" style="padding: 5px 0px 10px 0px">
+          <p style="margin: 10px"><label>Anilist Username: <input type="text" id="douki-anilist-username" /></label></p>
+          <p style="margin: 10px"><button id="douki-import">Import</button></p>
+        </form>
+        <br />
+        <p>Please be patient. If the import goes any faster MAL will ban you for violating the TOS.</p>
+        <ul id="douki-sync-log" style="list-type: none;"></ul>
+      </div>
+    `;
 
   const element = document.querySelector('#content');
   element.insertAdjacentHTML('afterend', html);
@@ -391,6 +356,7 @@ const addImportForm = () => {
 };
 
 const addDropDownItem = () => {
+  if (document.querySelector('#douki-sync')) return;
   const selector = '.header-menu-dropdown > ul > li:last-child';
   const dropdown = document.querySelector(selector);
   if (dropdown) {
@@ -404,7 +370,8 @@ const addDropDownItem = () => {
   }
 };
 
-(function () {
+// Entrypoint
+(() => {
   'use strict';
   addDropDownItem();
 
