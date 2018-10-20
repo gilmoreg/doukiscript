@@ -238,6 +238,8 @@ const shouldUpdate = (mal, al) =>
   Object.keys(al).some(key => {
     switch (key) {
       case 'csrf_token':
+      case 'anime_id':
+      case 'manga_id':
         return false;
       case 'start_date':
       case 'finish_date':
@@ -251,6 +253,14 @@ const shouldUpdate = (mal, al) =>
           if (mal.status === 2) return false;
           return al[key] !== mal[key];
         }
+      case 'num_watched_times':
+      case 'num_read_times':
+        // In certain cases this value will be missing from the MAL data and trying to update it will do nothing.
+        // To avoid a meaningless update every time, skip it if undefined on MAL
+        {
+          if (!mal.hasOwnProperty('num_watched_times')) return false;
+          return al[key] !== mal[key];
+        }
       default:
         {
           // Treat falsy values as equivalent (!= doesn't do the trick here)
@@ -260,20 +270,21 @@ const shouldUpdate = (mal, al) =>
     }
   });
 
-const syncList = async (type, list, fn) => {
+const syncList = async (type, list, operation) => {
   let itemCount = 0;
+  const logSelector = operation === 'add' ? '#douki-added-items' : '#douki-updated-items';
+  const fn = operation === 'add' ? malAdd : malEdit;
   for (let item of list) {
     await sleep(500);
     try {
       await fn(type, item);
       itemCount++;
+      document.querySelector(logSelector).innerHTML = itemCount;
     } catch (e) {
-      console.error(e);
       const itemId = item[`${type}_id`];
-      logMessage(`Error adding ${type} <a href="https://myanimelist.net/${type}/${itemId}>${itemId}</a>. Try adding it manually.`);
+      logMessage(`Error adding ${type} <a href="https://myanimelist.net/${type}/${itemId}" target="_blank" rel="noopener noreferrer">${itemId}</a>. Try adding it manually.`);
     }
   }
-  return itemCount;
 }
 
 const malSync = async (type, malUsername, anilistList, csrfToken) => {
@@ -290,13 +301,15 @@ const malSync = async (type, malUsername, anilistList, csrfToken) => {
     return shouldUpdate(malItem, item);
   });
 
-  logMessage(`Adding ${addList.length} ${type} items.`);
-  const addedItems = await syncList(type, addList, malAdd);
-  logMessage(`Added ${addedItems} ${type} items`);
+  if (addList && addList.length) {
+    logMessage(`Added <span id="douki-added-items">0</span> of ${addList.length} ${type} items.`);
+    await syncList(type, addList, 'add');
+  }
 
-  logMessage(`Updating ${updateList.length} ${type} items.`);
-  const updatedItems = await syncList(type, updateList, malEdit);
-  logMessage(`Updated ${updatedItems} ${type} items`);
+  if (updateList && updateList.length) {
+    logMessage(`Updating <span id="douki-updated-items">0</span> of ${updateList.length} ${type} items.`);
+    await syncList(type, updateList, 'edit');
+  }
 
   logMessage('Import complete.');
 };
@@ -304,6 +317,11 @@ const malSync = async (type, malUsername, anilistList, csrfToken) => {
 // Main business logic
 const sync = async (e) => {
   e.preventDefault();
+  const malUsernameElement = document.querySelector('.header-profile-link');
+  if (!malUsernameElement) {
+    logMessage('You must be logged in!');
+    return;
+  }
   console.clear();
   clearLog();
   logMessage(`Fetching data from Anilist...`);
@@ -315,7 +333,7 @@ const sync = async (e) => {
   }
   logMessage(`Fetched Anilist data.`);
   const csrfToken = document.querySelector('meta[name~="csrf_token"]').getAttribute("content");
-  const malUsername = document.querySelector('.header-profile-link').innerText;
+  const malUsername = malUsernameElement.innerText;
 
   if (anilistList.anime && anilistList.anime.length) {
     await malSync('anime', malUsername, anilistList.anime, csrfToken);
@@ -331,12 +349,17 @@ const addImportForm = () => {
   const html = `
       <div id="douki-form">
         <h1 class="h1">Import From Anilist</h1>
+        <div style="padding: 20px">
+          <p><strong>NOTICE</strong>: Use this script at your own risk. The author takes no responsibility for any damages of any kind.</p>
+          <p>It is <em>highly</em> recommended that you try this script out on a test MAL account before importing to your main account.</p>
+          <p>Visit <a href="" target="_blank" rel="noopener noreferrer">the Anilist thread</a> for this script to ask questions or report problems.</p>
+          <p>Please be patient. If the import goes any faster you will be in violation of MyAnimeList's Terms of Service.</p>
+        </div>
         <form id="douki-anilist-import" style="padding: 5px 0px 10px 0px">
           <p style="margin: 10px"><label>Anilist Username: <input type="text" id="douki-anilist-username" /></label></p>
           <p style="margin: 10px"><button id="douki-import">Import</button></p>
         </form>
         <br />
-        <p>Please be patient. If the import goes any faster MAL will ban you for violating the TOS.</p>
         <ul id="douki-sync-log" style="list-type: none;"></ul>
       </div>
     `;
