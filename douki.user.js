@@ -3,6 +3,7 @@
 // @namespace http://gilmoreg.com
 // @description Import Anime and Manga Lists from Anilist
 // @include https://myanimelist.net/*
+// @version 0.1.0
 // ==/UserScript==
 
 // Utility Functions
