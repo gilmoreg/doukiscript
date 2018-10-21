@@ -273,7 +273,7 @@ const shouldUpdate = (mal, al) =>
 
 const syncList = async (type, list, operation) => {
   let itemCount = 0;
-  const logSelector = operation === 'add' ? '#douki-added-items' : '#douki-updated-items';
+  const logSelector = operation === 'add' ? `#douki-added-${type}-items` : `#douki-updated-${type}-items`;
   const fn = operation === 'add' ? malAdd : malEdit;
   for (let item of list) {
     await sleep(500);
@@ -303,12 +303,12 @@ const malSync = async (type, malUsername, anilistList, csrfToken) => {
   });
 
   if (addList && addList.length) {
-    logMessage(`Added <span id="douki-added-items">0</span> of ${addList.length} ${type} items.`);
+    logMessage(`Added <span id="douki-added-${type}-items">0</span> of ${addList.length} ${type} items.`);
     await syncList(type, addList, 'add');
   }
 
   if (updateList && updateList.length) {
-    logMessage(`Updating <span id="douki-updated-items">0</span> of ${updateList.length} ${type} items.`);
+    logMessage(`Updating <span id="douki-updated-${type}-items">0</span> of ${updateList.length} ${type} items.`);
     await syncList(type, updateList, 'edit');
   }
 
