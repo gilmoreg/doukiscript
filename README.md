@@ -11,7 +11,7 @@ Unfortunately, given that MAL shut down its public API over security concerns, t
 ## Usage
 1. Install a userscript manager ([choose one from this list](https://greasyfork.org/en))
 2. Install the script [here](https://greasyfork.org/en/scripts/373467-douki)
-3. Visit [the import page on Myanimelist.net](https://myanimelist.net/import.php)
+3. Visit [the import page on Myanimelist.net](https://myanimelist.net/import.php). *You need to be logged in to MAL.*
 4. Alternatively, a link to the import page is added to the List dropdown at the top of the main page
 5. Fill in your Anilist username and hit `Import`
 
