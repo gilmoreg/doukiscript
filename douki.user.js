@@ -200,8 +200,9 @@ const buildDateString = (date) =>
   `${String(date.month).length < 2 ? '0' : ''}${date.month}-${String(date.day).length < 2 ? '0' : ''}${date.day}-${date.year ? String(date.year).slice(-2) : 0}`;
 
 const createMALData = (anilistData, csrf_token) => {
+  const status = getStatus(anilistData.status);
   const result = {
-    status: getStatus(anilistData.status),
+    status,
     csrf_token,
     score: anilistData.score || 0,
     finish_date: {
@@ -215,13 +216,16 @@ const createMALData = (anilistData, csrf_token) => {
       day: anilistData.startedAt.day || 0
     },
   };
-  if (anilistData.type === 'anime') {
-    result.num_watched_episodes = anilistData.progress || 0;
-    result.num_watched_times = anilistData.repeat || 0;
-  } else {
-    result.num_read_chapters = anilistData.progress || 0;
-    result.num_read_volumes = anilistData.progressVolumes || 0;
-    result.num_read_times = anilistData.repeat || 0;
+  // If status is COMPLETED (2) ignore episode, chapter, and volume count
+  if (status !== 2) {
+    if (anilistData.type === 'anime') {
+      result.num_watched_episodes = anilistData.progress || 0;
+      result.num_watched_times = anilistData.repeat || 0;
+    } else {
+      result.num_read_chapters = anilistData.progress || 0;
+      result.num_read_volumes = anilistData.progressVolumes || 0;
+      result.num_read_times = anilistData.repeat || 0;
+    }
   }
   result[`${anilistData.type}_id`] = anilistData.id;
   return result;
