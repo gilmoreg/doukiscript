@@ -3,7 +3,7 @@
 // @namespace http://gilmoreg.com
 // @description Import Anime and Manga Lists from Anilist (see https://anilist.co/forum/thread/2654 for more info)
 // @include https://myanimelist.net/*
-// @version 0.1.3
+// @version 0.1.4
 // ==/UserScript==
 
 // Utility Functions
@@ -176,6 +176,19 @@ const malAdd = (type, data) =>
     throw new Error(JSON.stringify(data));
   });
 
+// Use Jikan since MAL doesn't seem to have a GET method for a single item
+// Jikan also doesn't return episode counts as a single value except in search results
+// Have to take first page of results and hope for a match
+const getMALItem = ({
+    title,
+    id,
+    type
+  }) =>
+  fetch(`https://api.jikan.moe/v3/search/${type}/?q=${encodeURIComponent(title)}&page=1`)
+  .then(res => res.json())
+  .then(res => res.results && res.results.filter(r => r.mal_id === id))
+  .then(res => res && res.length ? res[0] : null);
+
 const getStatus = (status) => {
   // MAL status: 1/watching, 2/completed, 3/onhold, 4/dropped, 6/plantowatch
   switch (status.trim()) {
@@ -199,7 +212,7 @@ const buildDateString = (date) =>
   date.month === 0 && date.day === 0 && date.year === 0 ? null :
   `${String(date.month).length < 2 ? '0' : ''}${date.month}-${String(date.day).length < 2 ? '0' : ''}${date.day}-${date.year ? String(date.year).slice(-2) : 0}`;
 
-const createMALData = (anilistData, csrf_token) => {
+const createMALData = async (anilistData, malData, csrf_token) => {
   const status = getStatus(anilistData.status);
   const result = {
     status,
@@ -216,18 +229,48 @@ const createMALData = (anilistData, csrf_token) => {
       day: anilistData.startedAt.day || 0
     },
   };
-  // If status is COMPLETED (2) ignore episode, chapter, and volume count
-  if (status !== 2) {
+
+  result[`${anilistData.type}_id`] = anilistData.id;
+
+  if (anilistData.repeat) {
+    const verb = anilistData.type === 'anime' ? 'watched' : 'read';
+    result[`num_${verb}_times`] = anilistData.repeat;
+  }
+
+  // If status is COMPLETED (2) use episode, volume, and chapter counts from MAL
+  // Otherwise use AL's
+  if (status === 2) {
+    // Existing item; use MAL's provided counts
+    if (malData && Object.keys(malData).length) {
+      if (anilistData.type === 'anime') {
+        result.num_watched_episodes = malData.anime_num_episodes || 0;
+      } else {
+        result.num_read_chapters = malData.manga_num_chapters || 0;
+        result.num_read_volumes = malData.manga_num_volumes || 0;
+      }
+      // New item; fetch counts from Jikan
+    } else {
+      const malItem = await getMALItem(anilistData);
+      // If search was unsucessful, the best thing to do is bail and not touch the counts
+      if (!malItem) return result;
+
+      if (anilistData.type === 'anime') {
+        result.num_watched_episodes = malItem.episodes || 0;
+      } else {
+        result.num_read_chapters = malItem.chapters || 0;
+        result.num_read_volumes = malItem.volumes || 0;
+      }
+    }
+    // Non-completed item; use Anilist's counts
+    // Note the possibility that this count could be higher than MAL's max; see if that creates problems
+  } else {
     if (anilistData.type === 'anime') {
       result.num_watched_episodes = anilistData.progress || 0;
-      result.num_watched_times = anilistData.repeat || 0;
     } else {
       result.num_read_chapters = anilistData.progress || 0;
       result.num_read_volumes = anilistData.progressVolumes || 0;
-      result.num_read_times = anilistData.repeat || 0;
     }
   }
-  result[`${anilistData.type}_id`] = anilistData.id;
   return result;
 };
 
@@ -258,12 +301,16 @@ const shouldUpdate = (mal, al) =>
           if (mal.status === 2) return false;
           return al[key] !== mal[key];
         }
-      case 'num_watched_times':
-      case 'num_read_times':
-        // In certain cases this value will be missing from the MAL data and trying to update it will do nothing.
+        // In certain cases the next two values will be missing from the MAL data and trying to update them will do nothing.
         // To avoid a meaningless update every time, skip it if undefined on MAL
+      case 'num_watched_times':
         {
           if (!mal.hasOwnProperty('num_watched_times')) return false;
+          return al[key] !== mal[key];
+        }
+      case 'num_read_times':
+        {
+          if (!mal.hasOwnProperty('num_read_times')) return false;
           return al[key] !== mal[key];
         }
       default:
@@ -297,7 +344,7 @@ const malSync = async (type, malUsername, anilistList, csrfToken) => {
   const malAnimeList = await getMALList(type, malUsername);
   logMessage(`Fetched MyAnimeList ${type} list.`);
   const malHashMap = createMALHashMap(malAnimeList, type);
-  const anilistInMalFormat = anilistList.map(item => createMALData(item, csrfToken));
+  const anilistInMalFormat = anilistList.map(async (item) => await createMALData(item, malHashMap[item[`${type}_id`]], csrfToken));
   const addList = anilistInMalFormat.filter(item => !malHashMap[item[`${type}_id`]]);
   const updateList = anilistInMalFormat.filter(item => {
     const malItem = malHashMap[item[`${type}_id`]];
