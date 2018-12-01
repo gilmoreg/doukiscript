@@ -3,7 +3,7 @@
 // @namespace http://gilmoreg.com
 // @description Import Anime and Manga Lists from Anilist (see https://anilist.co/forum/thread/2654 for more info)
 // @include https://myanimelist.net/*
-// @version 0.1.4
+// @version 0.1.5
 // ==/UserScript==
 
 // Utility Functions
@@ -12,6 +12,19 @@ const logMessage = (msg) =>
 
 const clearLog = () =>
   document.querySelector('#douki-sync-log').innerHTML = '';
+
+const getOperationDisplayName = (operation) => {
+  switch (operation) {
+    case 'add':
+      return 'Adding';
+    case 'edit':
+      return 'Updating';
+    case 'complete':
+      return 'Fixing';
+    default:
+      throw new Error('Unknown operation type');
+  }
+};
 
 const sleep = (ms) => new Promise(resolve => setTimeout(() => resolve(), ms));
 
@@ -141,18 +154,20 @@ const getAnilistList = username =>
   });
 
 // MAL Functions
-const getMALList = async (type, username, list = [], page = 1) => {
+const getMALHashMap = async (type, username, list = [], page = 1) => {
   const offset = (page - 1) * 300;
   const nextList = await fetch(`https://myanimelist.net/${type}list/${username}/load.json?offset=${offset}`).then(res => res.json());
   if (nextList && nextList.length) {
     await sleep(1000);
-    return getMALList(type, username, [...list, ...nextList], page + 1);
+    return getMALHashMap(type, username, [...list, ...nextList], page + 1);
   }
-  return [...list, ...nextList];
+  logMessage(`Fetched MyAnimeList ${type} list.`);
+  const fullList = [...list, ...nextList];
+  return createMALHashMap(fullList, type);
 }
 
 const malEdit = (type, data) =>
-  fetch(`/ownlist/${type}/edit.json`, {
+  fetch(`https://myanimelist.net/ownlist/${type}/edit.json`, {
     method: 'post',
     body: JSON.stringify(data)
   })
@@ -162,7 +177,7 @@ const malEdit = (type, data) =>
   });
 
 const malAdd = (type, data) =>
-  fetch(`/ownlist/${type}/add.json`, {
+  fetch(`https://myanimelist.net/ownlist/${type}/add.json`, {
     method: 'post',
     headers: {
       'Accept': '*/*',
@@ -175,19 +190,6 @@ const malAdd = (type, data) =>
     if (res.status === 200) return res;
     throw new Error(JSON.stringify(data));
   });
-
-// Use Jikan since MAL doesn't seem to have a GET method for a single item
-// Jikan also doesn't return episode counts as a single value except in search results
-// Have to take first page of results and hope for a match
-const getMALItem = ({
-    title,
-    id,
-    type
-  }) =>
-  fetch(`https://api.jikan.moe/v3/search/${type}/?q=${encodeURIComponent(title)}&page=1`)
-  .then(res => res.json())
-  .then(res => res.results && res.results.filter(r => r.mal_id === id))
-  .then(res => res && res.length ? res[0] : null);
 
 const getStatus = (status) => {
   // MAL status: 1/watching, 2/completed, 3/onhold, 4/dropped, 6/plantowatch
@@ -212,7 +214,7 @@ const buildDateString = (date) =>
   date.month === 0 && date.day === 0 && date.year === 0 ? null :
   `${String(date.month).length < 2 ? '0' : ''}${date.month}-${String(date.day).length < 2 ? '0' : ''}${date.day}-${date.year ? String(date.year).slice(-2) : 0}`;
 
-const createMALData = async (anilistData, malData, csrf_token) => {
+const createMALData = (anilistData, malData, csrf_token) => {
   const status = getStatus(anilistData.status);
   const result = {
     status,
@@ -239,6 +241,8 @@ const createMALData = async (anilistData, malData, csrf_token) => {
 
   // If status is COMPLETED (2) use episode, volume, and chapter counts from MAL
   // Otherwise use AL's
+  // If the item is new, these values will not be present; however, once added, the update will swing back around
+  // and they will be available for an update
   if (status === 2) {
     // Existing item; use MAL's provided counts
     if (malData && Object.keys(malData).length) {
@@ -247,18 +251,6 @@ const createMALData = async (anilistData, malData, csrf_token) => {
       } else {
         result.num_read_chapters = malData.manga_num_chapters || 0;
         result.num_read_volumes = malData.manga_num_volumes || 0;
-      }
-      // New item; fetch counts from Jikan
-    } else {
-      const malItem = await getMALItem(anilistData);
-      // If search was unsucessful, the best thing to do is bail and not touch the counts
-      if (!malItem) return result;
-
-      if (anilistData.type === 'anime') {
-        result.num_watched_episodes = malItem.episodes || 0;
-      } else {
-        result.num_read_chapters = malItem.chapters || 0;
-        result.num_read_volumes = malItem.volumes || 0;
       }
     }
     // Non-completed item; use Anilist's counts
@@ -297,8 +289,10 @@ const shouldUpdate = (mal, al) =>
       case 'num_watched_episodes':
         // Anlist and MAL have different volume, episode, and chapter counts for some media;
         // If the item is marked as completed, ignore differences (Status 2 is COMPLETED)
+        // EXCEPT when the count is 0, in which case this was newly added without a count and needs
+        // to be updated now that the count is available
         {
-          if (mal.status === 2) return false;
+          if (mal.status === 2 && mal[key] !== 0) return false;
           return al[key] !== mal[key];
         }
         // In certain cases the next two values will be missing from the MAL data and trying to update them will do nothing.
@@ -323,47 +317,50 @@ const shouldUpdate = (mal, al) =>
   });
 
 const syncList = async (type, list, operation) => {
+  if (!list || !list.length) {
+    return;
+  }
+  const opName = getOperationDisplayName(operation);
+  const logId = `douki-${operation}-${type}-items`;
+  logMessage(`${opName} <span id="${logId}">0</span> of ${list.length} ${type} items.`);
   let itemCount = 0;
-  const logSelector = operation === 'add' ? `#douki-added-${type}-items` : `#douki-updated-${type}-items`;
+  // This uses malEdit() for 'completed' as well
   const fn = operation === 'add' ? malAdd : malEdit;
   for (let item of list) {
     await sleep(500);
     try {
-      await fn(type, item);
+      await fn(type, item.malData);
       itemCount++;
-      document.querySelector(logSelector).innerHTML = itemCount;
+      document.querySelector(`#${logId}`).innerHTML = itemCount;
     } catch (e) {
-      const itemId = item[`${type}_id`];
-      logMessage(`Error adding ${type} <a href="https://myanimelist.net/${type}/${itemId}" target="_blank" rel="noopener noreferrer">${itemId}</a>. Try adding it manually.`);
+      console.error(e);
+      logMessage(`Error for ${type} <a href="https://myanimelist.net/${type}/${item.id}" target="_blank" rel="noopener noreferrer">${item.title}</a>. Try adding or updating it manually.`);
     }
   }
 }
 
-const malSync = async (type, malUsername, anilistList, csrfToken) => {
+const syncType = async (type, anilistList, malUsername, csrfToken) => {
   logMessage(`Fetching MyAnimeList ${type} list...`);
-  const malAnimeList = await getMALList(type, malUsername);
-  logMessage(`Fetched MyAnimeList ${type} list.`);
-  const malHashMap = createMALHashMap(malAnimeList, type);
-  const anilistInMalFormat = anilistList.map(async (item) => await createMALData(item, malHashMap[item[`${type}_id`]], csrfToken));
-  const addList = anilistInMalFormat.filter(item => !malHashMap[item[`${type}_id`]]);
-  const updateList = anilistInMalFormat.filter(item => {
-    const malItem = malHashMap[item[`${type}_id`]];
-    // Do not try to sync items in the addList
+  let malHashMap = await getMALHashMap(type, malUsername);
+  let alPlusMal = anilistList.map(item => Object.assign({}, item, {
+    malData: createMALData(item, malHashMap[item.id], csrfToken),
+  }));
+
+  const addList = alPlusMal.filter(item => !malHashMap[item.id]);
+  await syncList(type, addList, 'add');
+
+  // Refresh list to get episode/chapter counts of new completed items
+  logMessage(`Refreshing MyAnimeList ${type} list...`);
+  malHashMap = await getMALHashMap(type, malUsername);
+  alPlusMal = anilistList.map(item => Object.assign({}, item, {
+    malData: createMALData(item, malHashMap[item.id], csrfToken),
+  }));
+  const updateList = alPlusMal.filter(item => {
+    const malItem = malHashMap[item.id];
     if (!malItem) return false;
-    return shouldUpdate(malItem, item);
+    return shouldUpdate(malItem, item.malData)
   });
-
-  if (addList && addList.length) {
-    logMessage(`Added <span id="douki-added-${type}-items">0</span> of ${addList.length} ${type} items.`);
-    await syncList(type, addList, 'add');
-  }
-
-  if (updateList && updateList.length) {
-    logMessage(`Updating <span id="douki-updated-${type}-items">0</span> of ${updateList.length} ${type} items.`);
-    await syncList(type, updateList, 'edit');
-  }
-
-  logMessage('Import complete.');
+  await syncList(type, updateList, 'edit');
 };
 
 // Main business logic
@@ -387,13 +384,10 @@ const sync = async (e) => {
   const csrfToken = document.querySelector('meta[name~="csrf_token"]').getAttribute("content");
   const malUsername = malUsernameElement.innerText;
 
-  if (anilistList.anime && anilistList.anime.length) {
-    await malSync('anime', malUsername, anilistList.anime, csrfToken);
-  }
-  if (anilistList.manga && anilistList.manga.length) {
-    await malSync('manga', malUsername, anilistList.manga, csrfToken);
-  }
-}
+  await syncType('anime', anilistList.anime, malUsername, csrfToken);
+  await syncType('manga', anilistList.manga, malUsername, csrfToken);
+  logMessage('Import complete.');
+};
 
 // DOM functions
 const addImportForm = () => {
