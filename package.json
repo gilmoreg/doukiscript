@@ -1,0 +1,27 @@
+{
+  "name": "doukiscript",
+  "version": "1.0.0",
+  "description": "",
+  "main": "douki.user.js",
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gilmoreg/doukiscript.git"
+  },
+  "author": "Grayson Gilmore <gilmoreg@live.com> (http://gilmoreg.com/)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gilmoreg/doukiscript/issues"
+  },
+  "homepage": "https://github.com/gilmoreg/doukiscript#readme",
+  "devDependencies": {
+    "eslint": "5.8.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-node": "^8.0.0",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0"
+  }
+}
