@@ -209,10 +209,17 @@ const getStatus = (status) => {
   }
 }
 
-// TODO find out if this respects internationalization
-const buildDateString = (date) =>
-  date.month === 0 && date.day === 0 && date.year === 0 ? null :
-  `${String(date.month).length < 2 ? '0' : ''}${date.month}-${String(date.day).length < 2 ? '0' : ''}${date.day}-${date.year ? String(date.year).slice(-2) : 0}`;
+const buildDateString = (date) => {
+  if (date.month === 0 && date.day === 0 && date.year === 0) return null;
+  const dateSetting = document.querySelector('#douki-date_format').value;
+  const month = `${String(date.month).length < 2 ? '0' : ''}${date.month}`;
+  const day = `${String(date.day).length < 2 ? '0' : ''}${date.day}`;
+  const year = `${date.year ? String(date.year).slice(-2) : 0}`;
+  if (dateSetting === 'a') {
+    return `${month}-${day}-${year}`;
+  }
+  return `${day}-${month}-${year}`;
+}
 
 const createMALData = (anilistData, malData, csrf_token) => {
   const status = getStatus(anilistData.status);
@@ -429,6 +436,14 @@ const addImportForm = () => {
         </div>
         <form id="douki-anilist-import" style="padding: 5px 0px 10px 0px">
           <p style="margin: 10px"><label>Anilist Username: <input type="text" id="douki-anilist-username" /></label></p>
+          <p style="margin: 10px">
+            <label>Date Format:
+              <select id="douki-date_format" class="inputtext">
+                <option value="a" selected>American (MM-DD-YY)
+                <option value="e" >European (DD-MM-YY)
+              </select>
+            </label>
+          </p>
           <p style="margin: 10px"><button id="douki-import">Import</button></p>
         </form>
         <br />
@@ -444,9 +459,17 @@ const addImportForm = () => {
   textBox.addEventListener('change', function (e) {
     localStorage.setItem('douki-settings', JSON.stringify(e.target.value));
   });
+  const dateFormatPicker = document.querySelector('#douki-date_format');
+  dateFormatPicker.addEventListener('change', function (e) {
+    localStorage.setItem('douki-settings-date', JSON.stringify(e.target.value));
+  });
   const username = JSON.parse(localStorage.getItem('douki-settings'));
   if (username) {
     textBox.value = username;
+  }
+  const dateOption = JSON.parse(localStorage.getItem('douki-settings-date'));
+  if (dateOption) {
+    dateFormatPicker.value = dateOption;
   }
 };
 
