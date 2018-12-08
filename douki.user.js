@@ -3,7 +3,7 @@
 // @namespace http://gilmoreg.com
 // @description Import Anime and Manga Lists from Anilist (see https://anilist.co/forum/thread/2654 for more info)
 // @include https://myanimelist.net/*
-// @version 0.1.5
+// @version 0.1.6
 // ==/UserScript==
 
 // Utility Functions
@@ -156,7 +156,7 @@ const getAnilistList = username =>
 // MAL Functions
 const getMALHashMap = async (type, username, list = [], page = 1) => {
   const offset = (page - 1) * 300;
-  const nextList = await fetch(`https://myanimelist.net/${type}list/${username}/load.json?offset=${offset}`).then(res => res.json());
+  const nextList = await fetch(`https://myanimelist.net/${type}list/${username}/load.json?offset=${offset}&status=7`).then(res => res.json());
   if (nextList && nextList.length) {
     await sleep(1000);
     return getMALHashMap(type, username, [...list, ...nextList], page + 1);
