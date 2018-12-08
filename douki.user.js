@@ -283,7 +283,13 @@ const shouldUpdate = (mal, al) =>
         return false;
       case 'start_date':
       case 'finish_date':
-        return buildDateString(al[key]) !== mal[`${key}_string`];
+        {
+          const dateString = buildDateString(al[key]);
+          if (dateString !== mal[`${key}_string`]) {
+            return true;
+          }
+          return false;
+        }
       case 'num_read_chapters':
       case 'num_read_volumes':
       case 'num_watched_episodes':
@@ -292,26 +298,46 @@ const shouldUpdate = (mal, al) =>
         // EXCEPT when the count is 0, in which case this was newly added without a count and needs
         // to be updated now that the count is available
         {
-          if (mal.status === 2 && mal[key] !== 0) return false;
-          return al[key] !== mal[key];
+          if (mal.status === 2 && mal[key] !== 0) {
+            return false;
+          }
+          if (al[key] !== mal[key]) {
+            return true;
+          };
+          return false;
         }
         // In certain cases the next two values will be missing from the MAL data and trying to update them will do nothing.
         // To avoid a meaningless update every time, skip it if undefined on MAL
       case 'num_watched_times':
         {
-          if (!mal.hasOwnProperty('num_watched_times')) return false;
-          return al[key] !== mal[key];
+          if (!mal.hasOwnProperty('num_watched_times')) {
+            return false;
+          }
+          if (al[key] !== mal[key]) {
+            return true;
+          };
+          return false;
         }
       case 'num_read_times':
         {
-          if (!mal.hasOwnProperty('num_read_times')) return false;
-          return al[key] !== mal[key];
+          if (!mal.hasOwnProperty('num_read_times')) {
+            return false;
+          }
+          if (al[key] !== mal[key]) {
+            return true;
+          }
+          return false;
         }
       default:
         {
           // Treat falsy values as equivalent (!= doesn't do the trick here)
-          if (!mal[key] && !al[key]) return false;
-          return al[key] !== mal[key];
+          if (!mal[key] && !al[key]) {
+            return false;
+          }
+          if (al[key] !== mal[key]) {
+            return true;
+          }
+          return false;
         }
     }
   });
