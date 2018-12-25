@@ -5,6 +5,9 @@
         "promise"
     ],
     "rules": {
-        "semi": "always"
+        "semi": 0
+    },
+    "env": {
+        "browser": true
     }
 }

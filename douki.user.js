@@ -3,15 +3,21 @@
 // @namespace http://gilmoreg.com
 // @description Import Anime and Manga Lists from Anilist (see https://anilist.co/forum/thread/2654 for more info)
 // @include https://myanimelist.net/*
-// @version 0.1.7
+// @version 0.1.8
 // ==/UserScript==
 
 // Utility Functions
 const logMessage = (msg) =>
   document.querySelector('#douki-sync-log').innerHTML += `<li>${msg}</li>`;
 
+const logError = (msg) =>
+  document.querySelector('#douki-error-log').innerHTML += `<li>${msg}</li>`;
+
 const clearLog = () =>
   document.querySelector('#douki-sync-log').innerHTML = '';
+
+const clearErrorLog = () =>
+  document.querySelector('#douki-error-log').innerHTML = '';
 
 const getOperationDisplayName = (operation) => {
   switch (operation) {
@@ -112,14 +118,14 @@ const fetchList = userName =>
         }
       }
     `, {
-    userName
-  })
-  .then(res => res.json())
-  .then(res => res.data)
-  .then(res => ({
-    anime: uniqify(flatten(res.anime.lists)),
-    manga: uniqify(flatten(res.manga.lists)),
-  }));
+      userName
+    })
+    .then(res => res.json())
+    .then(res => res.data)
+    .then(res => ({
+      anime: uniqify(flatten(res.anime.lists)),
+      manga: uniqify(flatten(res.manga.lists)),
+    }));
 
 const sanitize = (item, type) => ({
   type,
@@ -133,25 +139,33 @@ const sanitize = (item, type) => ({
   completedAt: {
     year: item.completedAt.year || 0,
     month: item.completedAt.month || 0,
-    day: item.completedAt.day || 0,
+    day: item.completedAt.day || 0
   },
   repeat: item.repeat,
   status: item.status,
   score: item.score,
   id: item.media.idMal,
-  title: item.media.title.romaji,
+  title: item.media.title.romaji
 });
 
 const getAnilistList = username =>
   fetchList(username)
-  .then(lists => ({
-    anime: lists.anime.map(item => sanitize(item, 'anime')).filter(item => item.id),
-    manga: lists.manga.map(item => sanitize(item, 'manga')).filter(item => item.id),
-  }))
-  .catch((err) => {
-    console.error('Anilist getList error', err);
-    return `No data found for user ${username}`;
-  });
+    .then(lists => ({
+      anime: lists.anime.map(item => sanitize(item, 'anime')),
+      manga: lists.manga.map(item => sanitize(item, 'manga'))
+    }))
+    .then(lists => ({
+      anime: lists.anime.filter(item => item.id),
+      manga: lists.manga.filter(item => item.id),
+      noMalIds: [
+        ...lists.anime.filter(item => !item.id),
+        ...lists.manga.filter(item => !item.id)
+      ]
+    }))
+    .catch((err) => {
+      console.error('Anilist getList error', err);
+      return `No data found for user ${username}`;
+    });
 
 // MAL Functions
 const getMALHashMap = async (type, username, list = [], page = 1) => {
@@ -171,10 +185,10 @@ const malEdit = (type, data) =>
     method: 'post',
     body: JSON.stringify(data)
   })
-  .then((res) => {
-    if (res.status === 200) return res;
-    throw new Error(JSON.stringify(data));
-  });
+    .then((res) => {
+      if (res.status === 200) return res;
+      throw new Error(JSON.stringify(data));
+    });
 
 const malAdd = (type, data) =>
   fetch(`https://myanimelist.net/ownlist/${type}/add.json`, {
@@ -186,10 +200,10 @@ const malAdd = (type, data) =>
     },
     body: JSON.stringify(data)
   })
-  .then((res) => {
-    if (res.status === 200) return res;
-    throw new Error(JSON.stringify(data));
-  });
+    .then((res) => {
+      if (res.status === 200) return res;
+      throw new Error(JSON.stringify(data));
+    });
 
 const getStatus = (status) => {
   // MAL status: 1/watching, 2/completed, 3/onhold, 4/dropped, 6/plantowatch
@@ -313,8 +327,8 @@ const shouldUpdate = (mal, al) =>
           };
           return false;
         }
-        // In certain cases the next two values will be missing from the MAL data and trying to update them will do nothing.
-        // To avoid a meaningless update every time, skip it if undefined on MAL
+      // In certain cases the next two values will be missing from the MAL data and trying to update them will do nothing.
+      // To avoid a meaningless update every time, skip it if undefined on MAL
       case 'num_watched_times':
         {
           if (!mal.hasOwnProperty('num_watched_times')) {
@@ -396,6 +410,14 @@ const syncType = async (type, anilistList, malUsername, csrfToken) => {
   await syncList(type, updateList, 'edit');
 };
 
+const fillErrorLog = (anilist) => {
+  if (!anilist.noMalIds || !anilist.noMalIds.length) return;
+  logError('Anilist does not have a MAL ID for the following items. If a verified MAL entry exists for any of these, contact an Anilist data mod to have it added.');
+  anilist.noMalIds.forEach(item => {
+    logError(`${item.type}: ${item.title}`);
+  });
+}
+
 // Main business logic
 const sync = async (e) => {
   e.preventDefault();
@@ -406,6 +428,7 @@ const sync = async (e) => {
   }
   console.clear();
   clearLog();
+  clearErrorLog();
   logMessage(`Fetching data from Anilist...`);
   const anilistUser = document.querySelector('#douki-anilist-username').value;
   const anilistList = await getAnilistList(anilistUser);
@@ -413,8 +436,9 @@ const sync = async (e) => {
     logMessage(`No data found for user ${anilistUser}.`);
     return;
   }
+  fillErrorLog(anilistList);
   logMessage(`Fetched Anilist data.`);
-  const csrfToken = document.querySelector('meta[name~="csrf_token"]').getAttribute("content");
+  const csrfToken = document.querySelector('meta[name~="csrf_token"]').getAttribute('content');
   const malUsername = malUsernameElement.innerText;
 
   await syncType('anime', anilistList.anime, malUsername, csrfToken);
@@ -448,6 +472,9 @@ const addImportForm = () => {
         </form>
         <br />
         <ul id="douki-sync-log" style="list-type: none;"></ul>
+        <p style="margin: 10px"><button id="douki-error-log-toggle" style="border: none">Show items that could not be synced</button></p>
+        <ul id="douki-error-log" style="list-type: none; display: none;">
+        </ul>
       </div>
     `;
 
@@ -471,6 +498,16 @@ const addImportForm = () => {
   if (dateOption) {
     dateFormatPicker.value = dateOption;
   }
+  const errorToggle = document.querySelector('#douki-error-log-toggle');
+  errorToggle.addEventListener('click', function (e) {
+    e.preventDefault();
+    const errorLog = document.querySelector('#douki-error-log');
+    if (errorLog.style.display === 'none') {
+      errorLog.style.display = 'block';
+    } else {
+      errorLog.style.display = 'none';
+    }
+  });
 };
 
 const addDropDownItem = () => {
