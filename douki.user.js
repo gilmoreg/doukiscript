@@ -207,9 +207,11 @@ const malAdd = (type, data) =>
 
 const getStatus = (status) => {
   // MAL status: 1/watching, 2/completed, 3/onhold, 4/dropped, 6/plantowatch
+  // MAL handles REPEATING as a boolean, and keeps status as COMPLETE
   switch (status.trim()) {
     case 'CURRENT':
       return 1;
+    case 'REPEATING':
     case 'COMPLETED':
       return 2;
     case 'PAUSED':
