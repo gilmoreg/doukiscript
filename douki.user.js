@@ -3,7 +3,7 @@
 // @namespace http://gilmoreg.com
 // @description Import Anime and Manga Lists from Anilist (see https://anilist.co/forum/thread/2654 for more info)
 // @include https://myanimelist.net/*
-// @version 0.1.8
+// @version 0.1.9
 // ==/UserScript==
 
 // Utility Functions
@@ -207,9 +207,11 @@ const malAdd = (type, data) =>
 
 const getStatus = (status) => {
   // MAL status: 1/watching, 2/completed, 3/onhold, 4/dropped, 6/plantowatch
+  // MAL handles REPEATING as a boolean, and keeps status as COMPLETE
   switch (status.trim()) {
     case 'CURRENT':
       return 1;
+    case 'REPEATING':
     case 'COMPLETED':
       return 2;
     case 'PAUSED':
