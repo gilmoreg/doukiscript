@@ -54,7 +54,7 @@ export interface DoukiAnilistData {
     manga: Array<FormattedEntry>
 }
 
-interface BaseMALItem {
+export interface BaseMALItem {
     status: number
     csrf_token: string
     score: number
@@ -63,13 +63,13 @@ interface BaseMALItem {
     [key: string]: any
 }
 
-interface MALAnime extends BaseMALItem {
+export interface MALAnime extends BaseMALItem {
     anime_id: number
     num_watched_times: number
     num_watched_episodes: number
 }
 
-interface MALManga extends BaseMALItem {
+export interface MALManga extends BaseMALItem {
     manga_id: number
     num_read_times: number
     num_read_chapters: number

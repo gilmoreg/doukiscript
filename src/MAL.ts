@@ -215,6 +215,7 @@ const syncList = async (type: string, list: Array<FullDataEntry>, operation: str
 export const syncType = async (type: string, anilistList: Array<FormattedEntry>, malUsername: string, csrfToken: string) => {
     Log.info(`Fetching MyAnimeList ${type} list...`);
     let malHashMap = await getMALHashMap(type, malUsername);
+    return;
     let alPlusMal = anilistList.map(item => Object.assign({}, item, {
         malData: createMALData(item, malHashMap[item.id], csrfToken),
     })) as Array<FullDataEntry>;
