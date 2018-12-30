@@ -75,7 +75,7 @@ export const addImportForm = (syncFn: Function) => {
 const addImportFormEventListeners = (syncFn: Function) => {
     const importButton = document.querySelector(id(DOUKI_IMPORT_BUTTON_ID));
     importButton && importButton.addEventListener('click', function (e) {
-        syncFn();
+        syncFn(e);
     });
 
     const textBox = document.querySelector(id(ANILIST_USERNAME_ID)) as HTMLInputElement;
@@ -124,5 +124,26 @@ const setLocalStorageSetting = (setting: string, value: string) => {
 
 export const getDateSetting = (): string => {
     const dateSetting = document.querySelector(id(DATE_SETTING_ID)) as HTMLSelectElement;
-    return dateSetting && dateSetting.value;
+    if (!dateSetting) throw new Error('Unable to get date setting');
+    return dateSetting.value;
+}
+
+export const getCSRFToken = (): string => {
+    const csrfTokenMeta = document.querySelector('meta[name~="csrf_token"]');
+    if (!csrfTokenMeta) throw new Error('Unable to get CSRF token - no meta element');
+    const csrfToken = csrfTokenMeta.getAttribute('content');
+    if (!csrfToken) throw new Error('Unable to get CSRF token - no content attribute');
+    return csrfToken;
+}
+
+export const getMALUsername = () => {
+    const malUsernameElement = document.querySelector('.header-profile-link') as HTMLDivElement;
+    if (!malUsernameElement) return null;
+    return malUsernameElement.innerText;
+}
+
+export const getAnilistUsername = () => {
+    const anilistUserElement = document.querySelector('#douki-anilist-username') as HTMLInputElement;
+    if (!anilistUserElement) throw new Error('Unable to get Anilist username');
+    return anilistUserElement.value;
 }

@@ -47,6 +47,7 @@ export default <webpack.Configuration>{
     resolve: {
         extensions: ['.ts', '.tsx', '.js']
     },
+    mode: 'none',
     module: {
         rules: [
             { test: /\.tsx?$/, use: 'ts-loader' }

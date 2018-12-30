@@ -1,79 +1,5 @@
 import * as Log from './Log';
-
-/*
-Anilist response is as follows:
-data: {
-    anime: {
-        lists: [
-            {
-                entries: [
-                    {entry}
-                ]
-            }
-        ]
-    },
-    manga: {
-        lists: [
-            {
-                entries: [
-                    {entry}
-                ]
-            }
-        ]
-    },
-}
-*/
-
-type AnilistDate = {
-    year: number
-    month: number
-    day: number
-}
-
-type BaseEntry = {
-    status: string
-    score: number
-    progress: number
-    progressVolumes: number
-    startedAt: AnilistDate
-    completedAt: AnilistDate
-    repeat: number
-}
-
-type Entry = BaseEntry & {
-    media: {
-        idMal: number
-        title: {
-            romaji: string
-        }
-    }
-}
-
-type MediaList = {
-    entries: Array<Entry>
-    [key: string]: Array<Entry>
-}
-
-type MediaListCollection = {
-    lists: MediaList
-}
-
-type AnilistResponse = {
-    anime: MediaListCollection
-    manga: MediaListCollection
-    [key: string]: MediaListCollection
-}
-
-type FormattedEntry = BaseEntry & {
-    type: string
-    id: number
-    title: string
-}
-
-type DoukiAnilistData = {
-    anime: Array<FormattedEntry>
-    manga: Array<FormattedEntry>
-}
+import { AnilistEntry, MediaList, FormattedEntry, DoukiAnilistData } from './Types';
 
 const flatten = (obj: MediaList) =>
     // Outer reduce concats arrays built by inner reduce
@@ -83,7 +9,7 @@ const flatten = (obj: MediaList) =>
             // @ts-ignore
             acc2.concat(obj[list][item]), [])), []);
 
-const uniqify = (arr: Array<Entry>) => {
+const uniqify = (arr: Array<AnilistEntry>) => {
     const seen = new Set();
     return arr.filter(item => (seen.has(item.media.idMal) ? false : seen.add(item.media.idMal)));
 };
@@ -169,7 +95,7 @@ const fetchList = (userName: string) =>
             manga: uniqify(flatten(res.manga.lists)),
         }));
 
-const sanitize = (item: Entry, type: string): FormattedEntry => ({
+const sanitize = (item: AnilistEntry, type: string): FormattedEntry => ({
     type,
     progress: item.progress,
     progressVolumes: item.progressVolumes,
