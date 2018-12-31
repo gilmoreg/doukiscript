@@ -89,7 +89,7 @@ export interface MALHashMap {
 
 export interface MALFormData {
     csrf_token: string
-    submitIt: number
+    submitIt: number        // NOT SURE WHAT THIS DOES, seems to be 0
     [key: string]: any
 }
 
@@ -135,7 +135,7 @@ export interface MALMangaFormData extends MALFormData {
     'add_manga[tags]': string
     'add_manga[priority]': number
     'add_manga[storage_type]': number
-    'add_manga[num_retail_volumes]': number
+    'add_manga[num_retail_volumes]': number // UNSURE WHERE TO GET THIS
     'add_manga[num_read_times]': number
     'add_manga[reread_value]': number
     'add_manga[comments]': string
