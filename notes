@@ -74,3 +74,33 @@ GetList data: {
    "storage_string":"",
    "priority_string":null
 },
+
+
+Manga edit:
+entry_id: 0
+manga_id: 14154
+add_manga[status]: 1
+add_manga[num_read_volumes]: 9
+last_completed_vol: 
+add_manga[num_read_chapters]: 308
+add_manga[score]: 8
+add_manga[start_date][month]: 
+add_manga[start_date][day]: 
+add_manga[start_date][year]: 
+add_manga[finish_date][month]: 
+add_manga[finish_date][day]: 
+add_manga[finish_date][year]: 
+add_manga[tags]: 
+add_manga[priority]: 0
+add_manga[storage_type]: 
+add_manga[num_retail_volumes]: 0
+add_manga[num_read_times]: 0
+add_manga[reread_value]: 
+add_manga[comments]: 
+add_manga[is_asked_to_discuss]: 0
+add_manga[sns_post_type]: 0
+submitIt: 0
+csrf_token: 2ae73d54ed43c613f52e4c3d0ff24988f348027a
+
+fetch("https://myanimelist.net/ownlist/manga/14154/edit?hideLayout", {"credentials":"include","headers":{"accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8","accept-language":"en-US,en;q=0.9,ja;q=0.8","cache-control":"max-age=0","content-type":"application/x-www-form-urlencoded","upgrade-insecure-requests":"1"},"referrer":"https://myanimelist.net/ownlist/manga/14154/edit?hideLayout","referrerPolicy":"no-referrer-when-downgrade",
+"body":"entry_id=0&manga_id=14154&add_manga%5Bstatus%5D=1&add_manga%5Bnum_read_volumes%5D=9&last_completed_vol=&add_manga%5Bnum_read_chapters%5D=308&add_manga%5Bscore%5D=8&add_manga%5Bstart_date%5D%5Bmonth%5D=&add_manga%5Bstart_date%5D%5Bday%5D=&add_manga%5Bstart_date%5D%5Byear%5D=&add_manga%5Bfinish_date%5D%5Bmonth%5D=&add_manga%5Bfinish_date%5D%5Bday%5D=&add_manga%5Bfinish_date%5D%5Byear%5D=&add_manga%5Btags%5D=&add_manga%5Bpriority%5D=0&add_manga%5Bstorage_type%5D=&add_manga%5Bnum_retail_volumes%5D=0&add_manga%5Bnum_read_times%5D=0&add_manga%5Breread_value%5D=&add_manga%5Bcomments%5D=&add_manga%5Bis_asked_to_discuss%5D=0&add_manga%5Bsns_post_type%5D=0&submitIt=0&csrf_token=2ae73d54ed43c613f52e4c3d0ff24988f348027a","method":"POST","mode":"cors"});

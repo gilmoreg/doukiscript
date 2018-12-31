@@ -1,7 +1,7 @@
 import { sleep, getOperationDisplayName } from './util';
 import * as Log from './Log';
 import * as Dom from './Dom';
-import { MALHashMap, MALItem, MediaDate, FormattedEntry, FullDataEntry, MALAnimeFormData } from './Types';
+import { MALHashMap, MALItem, MediaDate, FormattedEntry, FullDataEntry, MALAnimeFormData, MALAnime, MALManga, MALMangaFormData } from './Types';
 
 const createMALHashMap = (malList: Array<MALItem>, type: string): MALHashMap => {
     const hashMap: MALHashMap = {};
@@ -29,43 +29,71 @@ const getMALHashMap = async (type: string, username: string, list: Array<MALItem
     return createMALHashMap([...list, ...nextList], type);
 }
 
-const createMALFormData = (data: MALItem): string => {
-    const malData: MALAnimeFormData = {
-        'add_anime[comments]': '',
-        'add_anime[finish_date][day]': data.finish_date && data.finish_date.day || 0,
-        'add_anime[finish_date][month]': data.finish_date && data.finish_date.month || 0,
-        'add_anime[finish_date][year]': data.finish_date && data.finish_date.year || 0,
-        'add_anime[is_asked_to_discuss]': 0,
-        'add_anime[is_rewatching]': data.is_rewatching,
-        'add_anime[num_watched_episodes]': data.num_watched_episodes,
-        'add_anime[num_watched_times]': data.num_watched_times,
-        'add_anime[priority]': 0,
-        'add_anime[rewatch_value]': 0,
-        'add_anime[score]': data.score,
-        'add_anime[sns_post_type]': 0,
-        'add_anime[start_date][day]': data.start_date && data.start_date.day || 0,
-        'add_anime[start_date][month]': data.start_date && data.start_date.month || 0,
-        'add_anime[start_date][year]': data.start_date && data.start_date.year || 0,
-        'add_anime[status]': data.status,
-        'add_anime[storage_type]': 0,
-        'add_anime[storage_value]': 0,
-        'add_anime[tags]': data.tags,
-        aeps: data.anime_num_episodes,
-        anime_id: data.anime_id,
-        astatus: data.status,
-        csrf_token: data.csrf_token,
-        submitIt: 0
-    }
+const createMALAnimeFormData = (data: MALAnime): MALAnimeFormData => ({
+    'add_anime[comments]': '',
+    'add_anime[finish_date][day]': data.finish_date && data.finish_date.day || 0,
+    'add_anime[finish_date][month]': data.finish_date && data.finish_date.month || 0,
+    'add_anime[finish_date][year]': data.finish_date && data.finish_date.year || 0,
+    'add_anime[is_asked_to_discuss]': 0,
+    'add_anime[is_rewatching]': data.is_rewatching,
+    'add_anime[num_watched_episodes]': data.num_watched_episodes,
+    'add_anime[num_watched_times]': data.num_watched_times,
+    'add_anime[priority]': 0,
+    'add_anime[rewatch_value]': 0,
+    'add_anime[score]': data.score,
+    'add_anime[sns_post_type]': 0,
+    'add_anime[start_date][day]': data.start_date && data.start_date.day || 0,
+    'add_anime[start_date][month]': data.start_date && data.start_date.month || 0,
+    'add_anime[start_date][year]': data.start_date && data.start_date.year || 0,
+    'add_anime[status]': data.status,
+    'add_anime[storage_type]': 0,
+    'add_anime[storage_value]': 0,
+    'add_anime[tags]': data.tags,
+    aeps: data.anime_num_episodes || 0,
+    anime_id: data.anime_id,
+    astatus: data.status,
+    csrf_token: data.csrf_token,
+    submitIt: 0
+});
 
+const createMALMangaFormData = (data: MALManga): MALMangaFormData => ({
+    entry_id: 0,
+    manga_id: data.manga_id,
+    'add_manga[status]': data.status,
+    'add_manga[num_read_volumes]': data.num_read_volumes,
+    last_completed_vol: data.num_read_volumes,
+    'add_manga[num_read_chapters]': data.num_read_chapters,
+    'add_manga[score]': data.score,
+    'add_manga[start_date][month]': data.start_date && data.start_date.month || 0,
+    'add_manga[start_date][day]': data.start_date && data.start_date.day || 0,
+    'add_manga[start_date][year]': data.start_date && data.start_date.year || 0,
+    'add_manga[finish_date][month]': data.finish_date && data.finish_date.month || 0,
+    'add_manga[finish_date][day]': data.finish_date && data.finish_date.day || 0,
+    'add_manga[finish_date][year]': data.finish_date && data.finish_date.year || 0,
+    'add_manga[tags]': data.tags,
+    'add_manga[priority]': 0,
+    'add_manga[storage_type]': 0,
+    'add_manga[num_retail_volumes]': 0,
+    'add_manga[num_read_times]': data.num_read_times,
+    'add_manga[reread_value]': 0,
+    'add_manga[comments]': '',
+    'add_manga[is_asked_to_discuss]': 0,
+    'add_manga[sns_post_type]': 0,
+    csrf_token: data.csrf_token,
+    submitIt: 0
+});
+
+const createMALFormData = (type: string, data: any): string => {
+    const malData = type === 'anime' ? createMALAnimeFormData(data) : createMALMangaFormData(data);
     let formData = '';
     Object.keys(malData).forEach(key => {
         formData += `${encodeURIComponent(key)}=${encodeURIComponent(malData[key])}&`;
     });
     return formData.replace(/&$/, '');
-};
+}
 
 const malEdit = (type: string, data: MALItem) =>
-    fetch(`https://myanimelist.net/ownlist/${type}/${data.anime_id}/edit?hideLayout`,
+    fetch(`https://myanimelist.net/ownlist/${type}/${data.anime_id || data.manga_id}/edit?hideLayout`,
         {
             credentials: 'include',
             headers: {
@@ -75,9 +103,9 @@ const malEdit = (type: string, data: MALItem) =>
                 'content-type': 'application/x-www-form-urlencoded',
                 'upgrade-insecure-requests': '1'
             },
-            referrer: `https://myanimelist.net/ownlist/${type}/${data.anime_id}/edit?hideLayout`,
+            referrer: `https://myanimelist.net/ownlist/${type}/${data.anime_id || data.manga_id}/edit?hideLayout`,
             referrerPolicy: 'no-referrer-when-downgrade',
-            body: createMALFormData(data),
+            body: createMALFormData(type, data),
             method: 'POST',
             mode: 'cors'
         }).then((res) => {

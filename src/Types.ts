@@ -87,7 +87,13 @@ export interface MALHashMap {
     [key: number]: MALItem
 }
 
-export interface MALAnimeFormData {
+export interface MALFormData {
+    csrf_token: string
+    submitIt: number
+    [key: string]: any
+}
+
+export interface MALAnimeFormData extends MALFormData {
     'add_anime[comments]': string
     'add_anime[finish_date][day]': number
     'add_anime[finish_date][month]': number
@@ -109,8 +115,30 @@ export interface MALAnimeFormData {
     'add_anime[tags]': string
     aeps: number
     anime_id: number
-    astatus: number // "2"
-    csrf_token: string
-    submitIt: number
-    [key: string]: any
+    astatus: number
+}
+
+export interface MALMangaFormData extends MALFormData {
+    entry_id: number // NOT SURE WHAT THIS DOES, SEEMS TO BE 0 - could be volume in set
+    manga_id: number
+    'add_manga[status]': number
+    'add_manga[num_read_volumes]': number
+    last_completed_vol: number
+    'add_manga[num_read_chapters]': number
+    'add_manga[score]': number
+    'add_manga[start_date][month]': number
+    'add_manga[start_date][day]': number
+    'add_manga[start_date][year]': number
+    'add_manga[finish_date][month]': number
+    'add_manga[finish_date][day]': number
+    'add_manga[finish_date][year]': number
+    'add_manga[tags]': string
+    'add_manga[priority]': number
+    'add_manga[storage_type]': number
+    'add_manga[num_retail_volumes]': number
+    'add_manga[num_read_times]': number
+    'add_manga[reread_value]': number
+    'add_manga[comments]': string
+    'add_manga[is_asked_to_discuss]': number
+    'add_manga[sns_post_type]': number
 }
