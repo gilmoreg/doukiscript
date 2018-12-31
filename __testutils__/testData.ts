@@ -3,18 +3,18 @@ import * as Types from '../src/Types';
 const createDate = (year = 0, month = 0, day = 0) => ({ year, month, day });
 
 const malItem: Types.BaseMALItem = {
-    status: 0,
+    status: 2,
     csrf_token: 'csrfToken',
     score: 10,
-    finish_date: createDate(),
-    start_date: createDate(),
+    finish_date_string: null,
+    start_date_string: null,
 };
 
 const malAnime: Types.MALAnime = {
     ...malItem,
     anime_id: 1,
-    num_watched_times: 0,
-    num_watched_episodes: 0,
+    num_watched_times: 1,
+    num_watched_episodes: 12,
 };
 
 const malManga: Types.MALManga = {

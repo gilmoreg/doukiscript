@@ -5,7 +5,8 @@
   "scripts": {
     "build": "webpack --progress",
     "test": "jest --bail --runInBand",
-    "testwatch": "jest --watch --runInBand"
+    "testwatch": "jest --watch --runInBand",
+    "coverage": "jest --coverage"
   },
   "keywords": [
     "userscript"

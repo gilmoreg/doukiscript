@@ -1,0 +1,76 @@
+Edit request:
+
+fetch("https://myanimelist.net/ownlist/anime/320/edit?hideLayout",
+    {  
+        "credentials":"include",
+        "headers":{  
+            "accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+            "accept-language":"en-US,en;q=0.9,ja;q=0.8",
+            "cache-control":"max-age=0",
+            "content-type":"application/x-www-form-urlencoded",
+            "upgrade-insecure-requests":"1"
+        },
+        "referrer":"https://myanimelist.net/ownlist/anime/320/edit?hideLayout",
+        "referrerPolicy":"no-referrer-when-downgrade",
+        "body":"anime_id=320&aeps=2&astatus=2&add_anime%5Bstatus%5D=2&add_anime%5Bis_rewatching%5D=1&add_anime%5Bnum_watched_episodes%5D=1&add_anime%5Bscore%5D=7&add_anime%5Bstart_date%5D%5Bmonth%5D=&add_anime%5Bstart_date%5D%5Bday%5D=&add_anime%5Bstart_date%5D%5Byear%5D=&add_anime%5Bfinish_date%5D%5Bmonth%5D=&add_anime%5Bfinish_date%5D%5Bday%5D=&add_anime%5Bfinish_date%5D%5Byear%5D=&add_anime%5Btags%5D=&add_anime%5Bpriority%5D=0&add_anime%5Bstorage_type%5D=&add_anime%5Bstorage_value%5D=0&add_anime%5Bnum_watched_times%5D=0&add_anime%5Brewatch_value%5D=&add_anime%5Bcomments%5D=&add_anime%5Bis_asked_to_discuss%5D=0&add_anime%5Bsns_post_type%5D=0&submitIt=0&csrf_token=2ae73d54ed43c613f52e4c3d0ff24988f348027a",
+        "method":"POST",
+        "mode":"cors"
+    });
+
+Body:
+["anime_id=320", "aeps=2", "astatus=2", "add_anime%5Bstatus%5D=2", "add_anime%5Bis_rewatching%5D=1", "add_anime%5Bnum_watched_episodes%5D=1", "add_anime%5Bscore%5D=7", "add_anime%5Bstart_date%5D%5Bmonth%5D=", "add_anime%5Bstart_date%5D%5Bday%5D=", "add_anime%5Bstart_date%5D%5Byear%5D=", "add_anime%5Bfinish_date%5D%5Bmonth%5D=", "add_anime%5Bfinish_date%5D%5Bday%5D=", "add_anime%5Bfinish_date%5D%5Byear%5D=", "add_anime%5Btags%5D=", "add_anime%5Bpriority%5D=0", "add_anime%5Bstorage_type%5D=", "add_anime%5Bstorage_value%5D=0", "add_anime%5Bnum_watched_times%5D=0", "add_anime%5Brewatch_value%5D=", "add_anime%5Bcomments%5D=", "add_anime%5Bis_asked_to_discuss%5D=0", "add_anime%5Bsns_post_type%5D=0", "submitIt=0", "csrf_token=2ae73d54ed43c613f52e4c3d0ff24988f348027a"]
+add_anime%5Bcomments%5D: ""
+add_anime%5Bfinish_date%5D%5Bday%5D: ""
+add_anime%5Bfinish_date%5D%5Bmonth%5D: ""
+add_anime%5Bfinish_date%5D%5Byear%5D: ""
+add_anime%5Bis_asked_to_discuss%5D: "0"
+add_anime%5Bis_rewatching%5D: "1"
+add_anime%5Bnum_watched_episodes%5D: "1"
+add_anime%5Bnum_watched_times%5D: "0"
+add_anime%5Bpriority%5D: "0"
+add_anime%5Brewatch_value%5D: ""
+add_anime%5Bscore%5D: "7"
+add_anime%5Bsns_post_type%5D: "0"
+add_anime%5Bstart_date%5D%5Bday%5D: ""
+add_anime%5Bstart_date%5D%5Bmonth%5D: ""
+add_anime%5Bstart_date%5D%5Byear%5D: ""
+add_anime%5Bstatus%5D: "2"
+add_anime%5Bstorage_type%5D: ""
+add_anime%5Bstorage_value%5D: "0"
+add_anime%5Btags%5D: ""
+aeps: "2"
+anime_id: "320"
+astatus: "2"
+csrf_token: "2ae73d54ed43c613f52e4c3d0ff24988f348027a"
+submitIt: "0"
+
+GetList data: {  
+   "status":1,
+   "score":0,
+   "tags":"",
+   "is_rewatching":0,
+   "num_watched_episodes":22,
+   "anime_title":"Gintama'",
+   "anime_num_episodes":51,
+   "anime_airing_status":2,
+   "anime_id":9969,
+   "anime_studios":null,
+   "anime_licensors":null,
+   "anime_season":null,
+   "has_episode_video":true,
+   "has_promotion_video":false,
+   "has_video":true,
+   "video_url":"\/anime\/9969\/Gintama\/video",
+   "anime_url":"\/anime\/9969\/Gintama",
+   "anime_image_path":"https:\/\/cdn.myanimelist.net\/r\/96x136\/images\/anime\/4\/50361.jpg?s=6e9180d8f88fecd09befe7af576be6bd",
+   "is_added_to_list":true,
+   "anime_media_type_string":"TV",
+   "anime_mpaa_rating_string":"PG-13",
+   "start_date_string":"04-29-18",
+   "finish_date_string":null,
+   "anime_start_date_string":"04-04-11",
+   "anime_end_date_string":"03-26-12",
+   "days_string":247,
+   "storage_string":"",
+   "priority_string":null
+},

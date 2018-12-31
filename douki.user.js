@@ -537,23 +537,86 @@ const createMALHashMap = (malList, type) => {
 const getMALHashMap = async (type, username, list = [], page = 1) => {
     const offset = (page - 1) * 300;
     const nextList = await fetch(`https://myanimelist.net/${type}list/${username}/load.json?offset=${offset}&status=7`)
-        .then(res => res.json());
+        .then(async (res) => {
+        if (res.status !== 200) {
+            await util_1.sleep(2000);
+            return getMALHashMap(type, username, list, page);
+        }
+        return res.json();
+    });
     if (nextList && nextList.length) {
-        await util_1.sleep(1000);
+        await util_1.sleep(1500);
         return getMALHashMap(type, username, [...list, ...nextList], page + 1);
     }
     Log.info(`Fetched MyAnimeList ${type} list.`);
     return createMALHashMap([...list, ...nextList], type);
 };
-const malEdit = (type, data) => fetch(`https://myanimelist.net/ownlist/${type}/edit.json`, {
-    method: 'post',
-    body: JSON.stringify(data)
-})
-    .then((res) => {
-    if (res.status === 200)
-        return res;
-    throw new Error(JSON.stringify(data));
-});
+const createMALFormData = (data) => {
+    const malData = {
+        'add_anime[comments]': '',
+        'add_anime[finish_date][day]': data.finish_date && data.finish_date.day || 0,
+        'add_anime[finish_date][month]': data.finish_date && data.finish_date.month || 0,
+        'add_anime[finish_date][year]': data.finish_date && data.finish_date.year || 0,
+        'add_anime[is_asked_to_discuss]': 0,
+        'add_anime[is_rewatching]': data.is_rewatching,
+        'add_anime[num_watched_episodes]': data.num_watched_episodes,
+        'add_anime[num_watched_times]': data.num_watched_times,
+        'add_anime[priority]': 0,
+        'add_anime[rewatch_value]': 0,
+        'add_anime[score]': data.score,
+        'add_anime[sns_post_type]': 0,
+        'add_anime[start_date][day]': data.start_date && data.start_date.day || 0,
+        'add_anime[start_date][month]': data.start_date && data.start_date.month || 0,
+        'add_anime[start_date][year]': data.start_date && data.start_date.year || 0,
+        'add_anime[status]': data.status,
+        'add_anime[storage_type]': 0,
+        'add_anime[storage_value]': 0,
+        'add_anime[tags]': data.tags,
+        aeps: data.anime_num_episodes,
+        anime_id: data.anime_id,
+        astatus: data.status,
+        csrf_token: data.csrf_token,
+        submitIt: 0
+    };
+    // const formData = new FormData();
+    let formData = '';
+    Object.keys(malData).forEach(key => {
+        // formData.append(key, malData[key]);
+        formData += `${encodeURIComponent(key)}=${encodeURIComponent(malData[key])}&`;
+    });
+    return formData.replace(/&$/, '');
+};
+// const malEdit = (type: string, data: MALItem) =>
+//     fetch(`https://myanimelist.net/ownlist/${type}/edit.json`, {
+//         method: 'post',
+//         body: JSON.stringify(data)
+//     })
+//         .then((res) => {
+//             if (res.status === 200) return res;
+//             throw new Error(JSON.stringify(data));
+//         });
+const malEdit = (type, data) => {
+    const formData = createMALFormData(data);
+    return fetch(`https://myanimelist.net/ownlist/${type}/${data.anime_id}/edit?hideLayout`, {
+        credentials: 'include',
+        headers: {
+            accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+            'accept-language': 'en-US,en;q=0.9,ja;q=0.8',
+            'cache-control': 'max-age=0',
+            'content-type': 'application/x-www-form-urlencoded',
+            'upgrade-insecure-requests': '1'
+        },
+        referrer: `https://myanimelist.net/ownlist/${type}/${data.anime_id}/edit?hideLayout`,
+        referrerPolicy: 'no-referrer-when-downgrade',
+        body: formData,
+        method: 'POST',
+        mode: 'cors'
+    }).then((res) => {
+        if (res.status === 200)
+            return res;
+        throw new Error(JSON.stringify(data));
+    });
+};
 const malAdd = (type, data) => fetch(`https://myanimelist.net/ownlist/${type}/add.json`, {
     method: 'post',
     headers: {
@@ -599,7 +662,7 @@ const buildDateString = (date) => {
     }
     return `${day}-${month}-${year}`;
 };
-const createMALData = (anilistData, malData, csrf_token) => {
+exports.createMALData = (anilistData, malData, csrf_token) => {
     const status = getStatus(anilistData.status);
     const result = {
         status,
@@ -650,7 +713,7 @@ const createMALData = (anilistData, malData, csrf_token) => {
     }
     return result;
 };
-const shouldUpdate = (mal, al) => Object.keys(al).some(key => {
+exports.shouldUpdate = (mal, al) => Object.keys(al).some(key => {
     switch (key) {
         case 'csrf_token':
         case 'anime_id':
@@ -659,6 +722,7 @@ const shouldUpdate = (mal, al) => Object.keys(al).some(key => {
         case 'start_date':
         case 'finish_date':
             {
+                // @ts-ignore
                 const dateString = buildDateString(al[key]);
                 if (dateString !== mal[`${key}_string`]) {
                     return true;
@@ -734,7 +798,7 @@ exports.syncType = async (type, anilistList, malUsername, csrfToken) => {
     Log.info(`Fetching MyAnimeList ${type} list...`);
     let malHashMap = await getMALHashMap(type, malUsername);
     let alPlusMal = anilistList.map(item => Object.assign({}, item, {
-        malData: createMALData(item, malHashMap[item.id], csrfToken),
+        malData: exports.createMALData(item, malHashMap[item.id], csrfToken),
     }));
     const addList = alPlusMal.filter(item => !malHashMap[item.id]);
     await syncList(type, addList, 'add');
@@ -742,13 +806,13 @@ exports.syncType = async (type, anilistList, malUsername, csrfToken) => {
     Log.info(`Refreshing MyAnimeList ${type} list...`);
     malHashMap = await getMALHashMap(type, malUsername);
     alPlusMal = anilistList.map(item => Object.assign({}, item, {
-        malData: createMALData(item, malHashMap[item.id], csrfToken),
+        malData: exports.createMALData(item, malHashMap[item.id], csrfToken),
     }));
     const updateList = alPlusMal.filter(item => {
         const malItem = malHashMap[item.id];
         if (!malItem)
             return false;
-        return shouldUpdate(malItem, item.malData);
+        return exports.shouldUpdate(malItem, item.malData);
     });
     await syncList(type, updateList, 'edit');
 };

@@ -1,7 +1,7 @@
 import { sleep, getOperationDisplayName } from './util';
 import * as Log from './Log';
 import * as Dom from './Dom';
-import { MALHashMap, MALItem, MediaDate, FormattedEntry, FullDataEntry } from './Types';
+import { MALHashMap, MALItem, MediaDate, FormattedEntry, FullDataEntry, MALAnimeFormData } from './Types';
 
 const createMALHashMap = (malList: Array<MALItem>, type: string): MALHashMap => {
     const hashMap: MALHashMap = {};
@@ -14,24 +14,89 @@ const createMALHashMap = (malList: Array<MALItem>, type: string): MALHashMap => 
 const getMALHashMap = async (type: string, username: string, list: Array<MALItem> = [], page = 1): Promise<MALHashMap> => {
     const offset = (page - 1) * 300;
     const nextList = await fetch(`https://myanimelist.net/${type}list/${username}/load.json?offset=${offset}&status=7`)
-        .then(res => res.json());
+        .then(async res => {
+            if (res.status !== 200) {
+                await sleep(2000);
+                return getMALHashMap(type, username, list, page);
+            }
+            return res.json();
+        });
     if (nextList && nextList.length) {
-        await sleep(1000);
+        await sleep(1500);
         return getMALHashMap(type, username, [...list, ...nextList], page + 1);
     }
     Log.info(`Fetched MyAnimeList ${type} list.`);
     return createMALHashMap([...list, ...nextList], type);
 }
 
-const malEdit = (type: string, data: MALItem) =>
-    fetch(`https://myanimelist.net/ownlist/${type}/edit.json`, {
-        method: 'post',
-        body: JSON.stringify(data)
-    })
-        .then((res) => {
+const createMALFormData = (data: MALItem): string => {
+    const malData: MALAnimeFormData = {
+        'add_anime[comments]': '',
+        'add_anime[finish_date][day]': data.finish_date && data.finish_date.day || 0,
+        'add_anime[finish_date][month]': data.finish_date && data.finish_date.month || 0,
+        'add_anime[finish_date][year]': data.finish_date && data.finish_date.year || 0,
+        'add_anime[is_asked_to_discuss]': 0,
+        'add_anime[is_rewatching]': data.is_rewatching,
+        'add_anime[num_watched_episodes]': data.num_watched_episodes,
+        'add_anime[num_watched_times]': data.num_watched_times,
+        'add_anime[priority]': 0,
+        'add_anime[rewatch_value]': 0,
+        'add_anime[score]': data.score,
+        'add_anime[sns_post_type]': 0,
+        'add_anime[start_date][day]': data.start_date && data.start_date.day || 0,
+        'add_anime[start_date][month]': data.start_date && data.start_date.month || 0,
+        'add_anime[start_date][year]': data.start_date && data.start_date.year || 0,
+        'add_anime[status]': data.status,
+        'add_anime[storage_type]': 0,
+        'add_anime[storage_value]': 0,
+        'add_anime[tags]': data.tags,
+        aeps: data.anime_num_episodes,
+        anime_id: data.anime_id,
+        astatus: data.status, // "2"
+        csrf_token: data.csrf_token,
+        submitIt: 0
+    }
+
+    // const formData = new FormData();
+    let formData = '';
+    Object.keys(malData).forEach(key => {
+        // formData.append(key, malData[key]);
+        formData += `${encodeURIComponent(key)}=${encodeURIComponent(malData[key])}&`;
+    });
+    return formData.replace(/&$/, '');
+};
+
+// const malEdit = (type: string, data: MALItem) =>
+//     fetch(`https://myanimelist.net/ownlist/${type}/edit.json`, {
+//         method: 'post',
+//         body: JSON.stringify(data)
+//     })
+//         .then((res) => {
+//             if (res.status === 200) return res;
+//             throw new Error(JSON.stringify(data));
+//         });
+const malEdit = (type: string, data: MALItem) => {
+    const formData = createMALFormData(data);
+    return fetch(`https://myanimelist.net/ownlist/${type}/${data.anime_id}/edit?hideLayout`,
+        {
+            credentials: 'include',
+            headers: {
+                accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+                'accept-language': 'en-US,en;q=0.9,ja;q=0.8',
+                'cache-control': 'max-age=0',
+                'content-type': 'application/x-www-form-urlencoded',
+                'upgrade-insecure-requests': '1'
+            },
+            referrer: `https://myanimelist.net/ownlist/${type}/${data.anime_id}/edit?hideLayout`,
+            referrerPolicy: 'no-referrer-when-downgrade',
+            body: formData,
+            method: 'POST',
+            mode: 'cors'
+        }).then((res) => {
             if (res.status === 200) return res;
             throw new Error(JSON.stringify(data));
         });
+}
 
 const malAdd = (type: string, data: MALItem) =>
     fetch(`https://myanimelist.net/ownlist/${type}/add.json`, {
@@ -80,7 +145,7 @@ const buildDateString = (date: MediaDate) => {
     return `${day}-${month}-${year}`;
 }
 
-const createMALData = (anilistData: FormattedEntry, malData: MALItem, csrf_token: string): MALItem => {
+export const createMALData = (anilistData: FormattedEntry, malData: MALItem, csrf_token: string): MALItem => {
     const status = getStatus(anilistData.status);
     const result = {
         status,
@@ -132,7 +197,7 @@ const createMALData = (anilistData: FormattedEntry, malData: MALItem, csrf_token
     return result;
 };
 
-const shouldUpdate = (mal: MALItem, al: MALItem) =>
+export const shouldUpdate = (mal: MALItem, al: MALItem) =>
     Object.keys(al).some(key => {
         switch (key) {
             case 'csrf_token':
@@ -142,6 +207,7 @@ const shouldUpdate = (mal: MALItem, al: MALItem) =>
             case 'start_date':
             case 'finish_date':
                 {
+                    // @ts-ignore
                     const dateString = buildDateString(al[key]);
                     if (dateString !== mal[`${key}_string`]) {
                         return true;
