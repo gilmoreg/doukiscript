@@ -112,7 +112,6 @@ const malEdit = (type: string, data: MALItem) =>
             if (res.status === 200) return res;
             throw new Error(JSON.stringify(data));
         });
-}
 
 const malAdd = (type: string, data: MALItem) =>
     fetch(`https://myanimelist.net/ownlist/${type}/add.json`, {
