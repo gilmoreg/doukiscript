@@ -4,7 +4,7 @@ export type MediaDate = {
     day: number
 }
 
-interface AnilistBaseEntry {
+export interface AnilistBaseEntry {
     status: string
     score: number
     progress: number
