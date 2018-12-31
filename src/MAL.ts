@@ -52,32 +52,20 @@ const createMALFormData = (data: MALItem): string => {
         'add_anime[tags]': data.tags,
         aeps: data.anime_num_episodes,
         anime_id: data.anime_id,
-        astatus: data.status, // "2"
+        astatus: data.status,
         csrf_token: data.csrf_token,
         submitIt: 0
     }
 
-    // const formData = new FormData();
     let formData = '';
     Object.keys(malData).forEach(key => {
-        // formData.append(key, malData[key]);
         formData += `${encodeURIComponent(key)}=${encodeURIComponent(malData[key])}&`;
     });
     return formData.replace(/&$/, '');
 };
 
-// const malEdit = (type: string, data: MALItem) =>
-//     fetch(`https://myanimelist.net/ownlist/${type}/edit.json`, {
-//         method: 'post',
-//         body: JSON.stringify(data)
-//     })
-//         .then((res) => {
-//             if (res.status === 200) return res;
-//             throw new Error(JSON.stringify(data));
-//         });
-const malEdit = (type: string, data: MALItem) => {
-    const formData = createMALFormData(data);
-    return fetch(`https://myanimelist.net/ownlist/${type}/${data.anime_id}/edit?hideLayout`,
+const malEdit = (type: string, data: MALItem) =>
+    fetch(`https://myanimelist.net/ownlist/${type}/${data.anime_id}/edit?hideLayout`,
         {
             credentials: 'include',
             headers: {
@@ -89,7 +77,7 @@ const malEdit = (type: string, data: MALItem) => {
             },
             referrer: `https://myanimelist.net/ownlist/${type}/${data.anime_id}/edit?hideLayout`,
             referrerPolicy: 'no-referrer-when-downgrade',
-            body: formData,
+            body: createMALFormData(data),
             method: 'POST',
             mode: 'cors'
         }).then((res) => {
