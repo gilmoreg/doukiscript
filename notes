@@ -71,8 +71,8 @@ GetList data: {
    "anime_start_date_string":"04-04-11",
    "anime_end_date_string":"03-26-12",
    "days_string":247,
-   "storage_string":"",
-   "priority_string":null
+   "storage_string":"HD 2.0 Gb"",
+   "priority_string":"Low"
 },
 
 
@@ -104,3 +104,70 @@ csrf_token: 2ae73d54ed43c613f52e4c3d0ff24988f348027a
 
 fetch("https://myanimelist.net/ownlist/manga/14154/edit?hideLayout", {"credentials":"include","headers":{"accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8","accept-language":"en-US,en;q=0.9,ja;q=0.8","cache-control":"max-age=0","content-type":"application/x-www-form-urlencoded","upgrade-insecure-requests":"1"},"referrer":"https://myanimelist.net/ownlist/manga/14154/edit?hideLayout","referrerPolicy":"no-referrer-when-downgrade",
 "body":"entry_id=0&manga_id=14154&add_manga%5Bstatus%5D=1&add_manga%5Bnum_read_volumes%5D=9&last_completed_vol=&add_manga%5Bnum_read_chapters%5D=308&add_manga%5Bscore%5D=8&add_manga%5Bstart_date%5D%5Bmonth%5D=&add_manga%5Bstart_date%5D%5Bday%5D=&add_manga%5Bstart_date%5D%5Byear%5D=&add_manga%5Bfinish_date%5D%5Bmonth%5D=&add_manga%5Bfinish_date%5D%5Bday%5D=&add_manga%5Bfinish_date%5D%5Byear%5D=&add_manga%5Btags%5D=&add_manga%5Bpriority%5D=0&add_manga%5Bstorage_type%5D=&add_manga%5Bnum_retail_volumes%5D=0&add_manga%5Bnum_read_times%5D=0&add_manga%5Breread_value%5D=&add_manga%5Bcomments%5D=&add_manga%5Bis_asked_to_discuss%5D=0&add_manga%5Bsns_post_type%5D=0&submitIt=0&csrf_token=2ae73d54ed43c613f52e4c3d0ff24988f348027a","method":"POST","mode":"cors"});
+
+
+So the distinction between POST data and fetched data is not clear enough, leading me to leave out critical info
+
+Furthermore I'm not entirely happy with this 'malData' business on an anilist object
+Also, couldn't I also be creating an anilist hashmap? Or would that make it harder to iterate over the list?
+Yeah I don't think I ever search over anilist - I iterate over it and do the searching in MAL, so that's probably fine 
+
+If I could just solve the data architecture problem...
+Maybe it's OK to have MALData there, its just that AlPlusMal is so awkward
+
+
+
+
+Current edit form data:
+anime_id: 38002
+aeps: 2
+astatus: 2
+add_anime[status]: 2
+add_anime[num_watched_episodes]: 2
+add_anime[score]: 8
+add_anime[start_date][month]: 0
+add_anime[start_date][day]: 0
+add_anime[start_date][year]: 0
+add_anime[finish_date][month]: 0
+add_anime[finish_date][day]: 0
+add_anime[finish_date][year]: 0
+add_anime[tags]: 
+add_anime[priority]: 0
+add_anime[storage_type]: 0
+add_anime[storage_value]: 0
+add_anime[num_watched_times]: 0
+add_anime[rewatch_value]: 0
+add_anime[comments]: 
+add_anime[is_asked_to_discuss]: 0
+add_anime[sns_post_type]: 0
+csrf_token: 2ae73d54ed43c613f52e4c3d0ff24988f348027a
+submitIt: 0
+
+<strong>Invalid submission.</strong>
+<strong>Successfully updated entry.</strong>
+
+
+Working submission:
+anime_id: 38002
+aeps: 2
+astatus: 2
+add_anime[status]: 2
+add_anime[num_watched_episodes]: 2
+add_anime[score]: 8
+add_anime[start_date][month]: 
+add_anime[start_date][day]: 
+add_anime[start_date][year]: 
+add_anime[finish_date][month]: 1
+add_anime[finish_date][day]: 1
+add_anime[finish_date][year]: 2019
+add_anime[tags]: 
+add_anime[priority]: 0
+add_anime[storage_type]: 
+add_anime[storage_value]: 0
+add_anime[num_watched_times]: 0
+add_anime[rewatch_value]: 
+add_anime[comments]: 
+add_anime[is_asked_to_discuss]: 0
+add_anime[sns_post_type]: 0
+submitIt: 0
+csrf_token: 2ae73d54ed43c613f52e4c3d0ff24988f348027a

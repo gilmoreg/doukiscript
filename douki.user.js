@@ -526,7 +526,7 @@ exports.getAnilistList = (username) => fetchList(username)
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_1 = __webpack_require__(3);
 const Log = __webpack_require__(1);
-const Dom = __webpack_require__(4);
+const MALEntry_1 = __webpack_require__(7);
 const createMALHashMap = (malList, type) => {
     const hashMap = {};
     malList.forEach(item => {
@@ -551,114 +551,117 @@ const getMALHashMap = async (type, username, list = [], page = 1) => {
     Log.info(`Fetched MyAnimeList ${type} list.`);
     return createMALHashMap([...list, ...nextList], type);
 };
-const createMALAnimeFormData = (data) => ({
-    'add_anime[comments]': '',
-    'add_anime[finish_date][day]': data.finish_date && data.finish_date.day || 0,
-    'add_anime[finish_date][month]': data.finish_date && data.finish_date.month || 0,
-    'add_anime[finish_date][year]': data.finish_date && data.finish_date.year || 0,
-    'add_anime[is_asked_to_discuss]': 0,
-    'add_anime[is_rewatching]': data.is_rewatching,
-    'add_anime[num_watched_episodes]': data.num_watched_episodes,
-    'add_anime[num_watched_times]': data.num_watched_times,
-    'add_anime[priority]': 0,
-    'add_anime[rewatch_value]': 0,
-    'add_anime[score]': data.score,
-    'add_anime[sns_post_type]': 0,
-    'add_anime[start_date][day]': data.start_date && data.start_date.day || 0,
-    'add_anime[start_date][month]': data.start_date && data.start_date.month || 0,
-    'add_anime[start_date][year]': data.start_date && data.start_date.year || 0,
-    'add_anime[status]': data.status,
-    'add_anime[storage_type]': 0,
-    'add_anime[storage_value]': 0,
-    'add_anime[tags]': data.tags,
-    aeps: data.anime_num_episodes || 0,
-    anime_id: data.anime_id,
-    astatus: data.status,
-    csrf_token: data.csrf_token,
-    submitIt: 0
-});
-const createMALMangaFormData = (data) => ({
-    entry_id: 0,
-    manga_id: data.manga_id,
-    'add_manga[status]': data.status,
-    'add_manga[num_read_volumes]': data.num_read_volumes,
-    last_completed_vol: data.num_read_volumes,
-    'add_manga[num_read_chapters]': data.num_read_chapters,
-    'add_manga[score]': data.score,
-    'add_manga[start_date][month]': data.start_date && data.start_date.month || 0,
-    'add_manga[start_date][day]': data.start_date && data.start_date.day || 0,
-    'add_manga[start_date][year]': data.start_date && data.start_date.year || 0,
-    'add_manga[finish_date][month]': data.finish_date && data.finish_date.month || 0,
-    'add_manga[finish_date][day]': data.finish_date && data.finish_date.day || 0,
-    'add_manga[finish_date][year]': data.finish_date && data.finish_date.year || 0,
-    'add_manga[tags]': data.tags,
-    'add_manga[priority]': 0,
-    'add_manga[storage_type]': 0,
-    'add_manga[num_retail_volumes]': 0,
-    'add_manga[num_read_times]': data.num_read_times,
-    'add_manga[reread_value]': 0,
-    'add_manga[comments]': '',
-    'add_manga[is_asked_to_discuss]': 0,
-    'add_manga[sns_post_type]': 0,
-    csrf_token: data.csrf_token,
-    submitIt: 0
-});
-const createMALFormData = (type, data) => {
-    const malData = type === 'anime' ? createMALAnimeFormData(data) : createMALMangaFormData(data);
-    let formData = '';
-    Object.keys(malData).forEach(key => {
-        formData += `${encodeURIComponent(key)}=${encodeURIComponent(malData[key])}&`;
-    });
-    return formData.replace(/&$/, '');
+const getEntriesList = async (anilistList, type, malUsername, csrfToken) => {
+    const malHashMap = await getMALHashMap(type, malUsername);
+    return anilistList.map(entry => MALEntry_1.createMALEntry(entry, malHashMap[entry.id], csrfToken));
 };
-const malEdit = (type, data) => fetch(`https://myanimelist.net/ownlist/${type}/${data.anime_id || data.manga_id}/edit?hideLayout`, {
-    credentials: 'include',
-    headers: {
-        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-        'accept-language': 'en-US,en;q=0.9,ja;q=0.8',
-        'cache-control': 'max-age=0',
-        'content-type': 'application/x-www-form-urlencoded',
-        'upgrade-insecure-requests': '1'
-    },
-    referrer: `https://myanimelist.net/ownlist/${type}/${data.anime_id || data.manga_id}/edit?hideLayout`,
-    referrerPolicy: 'no-referrer-when-downgrade',
-    body: createMALFormData(type, data),
-    method: 'POST',
-    mode: 'cors'
-}).then((res) => {
-    if (res.status === 200)
-        return res;
-    throw new Error(JSON.stringify(data));
-});
-const malAdd = (type, data) => fetch(`https://myanimelist.net/ownlist/${type}/add.json`, {
+const malEdit = (data) => {
+    const { type, id } = data;
+    return fetch(`https://myanimelist.net/ownlist/${type}/${id}/edit?hideLayout`, {
+        credentials: 'include',
+        headers: {
+            accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+            'accept-language': 'en-US,en;q=0.9,ja;q=0.8',
+            'cache-control': 'max-age=0',
+            'content-type': 'application/x-www-form-urlencoded',
+            'upgrade-insecure-requests': '1'
+        },
+        referrer: `https://myanimelist.net/ownlist/${type}/${id}/edit?hideLayout`,
+        referrerPolicy: 'no-referrer-when-downgrade',
+        body: data.formData(),
+        method: 'POST',
+        mode: 'cors'
+    }).then((res) => {
+        // TODO figure out how to error check the html that comes back
+        if (res.status === 200)
+            return res;
+        throw new Error(JSON.stringify(data));
+    }).then((res) => res.text())
+        .then((text) => {
+        if (text.match(/.+Successfully updated entry.+/))
+            return true;
+        throw new Error(JSON.stringify(data));
+    });
+};
+const malAdd = (data) => fetch(`https://myanimelist.net/ownlist/${data.type}/add.json`, {
     method: 'post',
     headers: {
         'Accept': '*/*',
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
         'x-requested-with': 'XMLHttpRequest'
     },
-    body: JSON.stringify(data)
+    body: JSON.stringify(data.postData)
 })
     .then((res) => {
     if (res.status === 200)
         return res;
     throw new Error(JSON.stringify(data));
 });
+const syncList = async (type, list, operation) => {
+    if (!list || !list.length) {
+        return;
+    }
+    Log.addCountLog(operation, type, list.length);
+    let itemCount = 0;
+    // This uses malEdit() for 'completed' as well
+    const fn = operation === 'add' ? malAdd : malEdit;
+    for (let item of list) {
+        await util_1.sleep(500);
+        try {
+            await fn(item);
+            itemCount++;
+            Log.updateCountLog(operation, type, itemCount);
+        }
+        catch (e) {
+            console.error(e);
+            Log.info(`Error for ${type} <a href="https://myanimelist.net/${type}/${item.id}" target="_blank" rel="noopener noreferrer">${item.title}</a>. Try adding or updating it manually.`);
+        }
+    }
+};
+exports.syncType = async (type, anilistList, malUsername, csrfToken) => {
+    Log.info(`Fetching MyAnimeList ${type} list...`);
+    let list = await getEntriesList(anilistList, type, malUsername, csrfToken);
+    const addList = list.filter(entry => entry.shouldAdd());
+    await syncList(type, addList, 'add');
+    // Refresh list to get episode/chapter counts of new completed items
+    Log.info(`Refreshing MyAnimeList ${type} list...`);
+    list = await getEntriesList(anilistList, type, malUsername, csrfToken);
+    const updateList = list.filter(entry => entry.shouldUpdate());
+    await syncList(type, updateList, 'edit');
+};
+
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const Dom = __webpack_require__(4);
+exports.createMALEntry = (al, mal, csrfToken) => al.type === 'anime' ? new MALEntryAnime(al, mal, csrfToken) : new MALEntryManga(al, mal, csrfToken);
+const MALStatus = {
+    Current: 1,
+    Completed: 2,
+    Paused: 3,
+    Dropped: 4,
+    Planning: 6
+};
 const getStatus = (status) => {
     // MAL status: 1/watching, 2/completed, 3/onhold, 4/dropped, 6/plantowatch
     // MAL handles REPEATING as a boolean, and keeps status as COMPLETE
     switch (status.trim()) {
         case 'CURRENT':
-            return 1;
+            return MALStatus.Current;
         case 'REPEATING':
         case 'COMPLETED':
-            return 2;
+            return MALStatus.Completed;
         case 'PAUSED':
-            return 3;
+            return MALStatus.Paused;
         case 'DROPPED':
-            return 4;
+            return MALStatus.Dropped;
         case 'PLANNING':
-            return 6;
+            return MALStatus.Planning;
         default:
             throw new Error(`unknown status "${status}"`);
     }
@@ -675,160 +678,226 @@ const buildDateString = (date) => {
     }
     return `${day}-${month}-${year}`;
 };
-exports.createMALData = (anilistData, malData, csrf_token) => {
-    const status = getStatus(anilistData.status);
-    const result = {
-        status,
-        csrf_token,
-        score: anilistData.score || 0,
-        finish_date: {
-            year: anilistData.completedAt.year || 0,
-            month: anilistData.completedAt.month || 0,
-            day: anilistData.completedAt.day || 0
-        },
-        start_date: {
-            year: anilistData.startedAt.year || 0,
-            month: anilistData.startedAt.month || 0,
-            day: anilistData.startedAt.day || 0
-        },
-    };
-    result[`${anilistData.type}_id`] = anilistData.id;
-    if (anilistData.repeat) {
-        const verb = anilistData.type === 'anime' ? 'watched' : 'read';
-        result[`num_${verb}_times`] = anilistData.repeat;
-    }
-    // If status is COMPLETED (2) use episode, volume, and chapter counts from MAL
-    // Otherwise use AL's
-    // If the item is new, these values will not be present; however, once added, the update will swing back around
-    // and they will be available for an update
-    if (status === 2) {
-        // Existing item; use MAL's provided counts
-        if (malData && Object.keys(malData).length) {
-            if (anilistData.type === 'anime') {
-                result.num_watched_episodes = malData.anime_num_episodes || 0;
-            }
-            else {
-                result.num_read_chapters = malData.manga_num_chapters || 0;
-                result.num_read_volumes = malData.manga_num_volumes || 0;
-            }
-        }
-    }
-    else {
-        // Non-completed item; use Anilist's counts
-        // Note the possibility that this count could be higher than MAL's max; see if that creates problems
-        if (anilistData.type === 'anime') {
-            result.num_watched_episodes = anilistData.progress || 0;
-        }
-        else {
-            result.num_read_chapters = anilistData.progress || 0;
-            result.num_read_volumes = anilistData.progressVolumes || 0;
-        }
-    }
-    return result;
-};
-exports.shouldUpdate = (mal, al) => Object.keys(al).some(key => {
-    switch (key) {
-        case 'csrf_token':
-        case 'anime_id':
-        case 'manga_id':
-            return false;
-        case 'start_date':
-        case 'finish_date':
-            {
-                // @ts-ignore
-                const dateString = buildDateString(al[key]);
-                if (dateString !== mal[`${key}_string`]) {
-                    return true;
-                }
-                return false;
-            }
-        case 'num_read_chapters':
-        case 'num_read_volumes':
-        case 'num_watched_episodes':
-            // Anlist and MAL have different volume, episode, and chapter counts for some media;
-            // If the item is marked as completed, ignore differences (Status 2 is COMPLETED)
-            // EXCEPT when the count is 0, in which case this was newly added without a count and needs
-            // to be updated now that the count is available
-            {
-                if (mal.status === 2 && mal[key] !== 0) {
-                    return false;
-                }
-                if (al[key] !== mal[key]) {
-                    return true;
-                }
-                ;
-                return false;
-            }
-        // In certain cases the next two values will be missing from the MAL data and trying to update them will do nothing.
-        // To avoid a meaningless update every time, skip it if undefined on MAL
-        case 'num_watched_times':
-        case 'num_read_times':
-            {
-                if (!mal.hasOwnProperty(key)) {
-                    return false;
-                }
-                if (al[key] !== mal[key]) {
-                    return true;
-                }
-                ;
-                return false;
-            }
-        default:
-            {
-                // Treat falsy values as equivalent (!= doesn't do the trick here)
-                if (!mal[key] && !al[key]) {
-                    return false;
-                }
-                if (al[key] !== mal[key]) {
-                    return true;
-                }
-                return false;
-            }
-    }
-});
-const syncList = async (type, list, operation) => {
-    if (!list || !list.length) {
-        return;
-    }
-    Log.addCountLog(operation, type, list.length);
-    let itemCount = 0;
-    // This uses malEdit() for 'completed' as well
-    const fn = operation === 'add' ? malAdd : malEdit;
-    for (let item of list) {
-        await util_1.sleep(500);
-        try {
-            await fn(type, item.malData);
-            itemCount++;
-            Log.updateCountLog(operation, type, itemCount);
-        }
-        catch (e) {
-            console.error(e);
-            Log.info(`Error for ${type} <a href="https://myanimelist.net/${type}/${item.id}" target="_blank" rel="noopener noreferrer">${item.title}</a>. Try adding or updating it manually.`);
-        }
-    }
-};
-exports.syncType = async (type, anilistList, malUsername, csrfToken) => {
-    Log.info(`Fetching MyAnimeList ${type} list...`);
-    let malHashMap = await getMALHashMap(type, malUsername);
-    let alPlusMal = anilistList.map(item => Object.assign({}, item, {
-        malData: exports.createMALData(item, malHashMap[item.id], csrfToken),
-    }));
-    const addList = alPlusMal.filter(item => !malHashMap[item.id]);
-    await syncList(type, addList, 'add');
-    // Refresh list to get episode/chapter counts of new completed items
-    Log.info(`Refreshing MyAnimeList ${type} list...`);
-    malHashMap = await getMALHashMap(type, malUsername);
-    alPlusMal = anilistList.map(item => Object.assign({}, item, {
-        malData: exports.createMALData(item, malHashMap[item.id], csrfToken),
-    }));
-    const updateList = alPlusMal.filter(item => {
-        const malItem = malHashMap[item.id];
-        if (!malItem)
-            return false;
-        return exports.shouldUpdate(malItem, item.malData);
+const createMALFormData = (malData) => {
+    let formData = '';
+    Object.keys(malData).forEach(key => {
+        formData += `${encodeURIComponent(key)}=${encodeURIComponent(malData[key])}&`;
     });
-    await syncList(type, updateList, 'edit');
+    return formData.replace(/&$/, '');
 };
+class BaseMALEntry {
+    constructor(al, mal, csrfToken = '') {
+        this.alData = al;
+        this.malData = mal;
+        this.csrfToken = csrfToken;
+        this._postData = this.createPostData();
+    }
+    createBaseMALPostItem() {
+        return {
+            status: getStatus(this.alData.status),
+            csrf_token: this.csrfToken,
+            score: this.alData.score || 0,
+            finish_date: {
+                year: this.alData.completedAt.year || 0,
+                month: this.alData.completedAt.month || 0,
+                day: this.alData.completedAt.day || 0
+            },
+            start_date: {
+                year: this.alData.startedAt.year || 0,
+                month: this.alData.startedAt.month || 0,
+                day: this.alData.startedAt.day || 0
+            }
+        };
+    }
+    shouldUpdate() {
+        return Object.keys(this._postData).some(key => {
+            switch (key) {
+                case 'csrf_token':
+                case 'anime_id':
+                case 'manga_id':
+                    return false;
+                case 'start_date':
+                case 'finish_date':
+                    {
+                        // @ts-ignore
+                        const dateString = buildDateString(this._postData[key]);
+                        if (dateString !== this.malData[`${key}_string`]) {
+                            return true;
+                        }
+                        return false;
+                    }
+                case 'num_read_chapters':
+                case 'num_read_volumes':
+                case 'num_watched_episodes':
+                    // Anlist and MAL have different volume, episode, and chapter counts for some media;
+                    // If the item is marked as completed, ignore differences (Status 2 is COMPLETED)
+                    // EXCEPT when the count is 0, in which case this was newly added without a count and needs
+                    // to be updated now that the count is available
+                    {
+                        if (this.malData.status === MALStatus.Completed && this.malData[key] !== 0) {
+                            return false;
+                        }
+                        if (this._postData[key] !== this.malData[key]) {
+                            return true;
+                        }
+                        ;
+                        return false;
+                    }
+                // In certain cases the next two values will be missing from the MAL data and trying to update them will do nothing.
+                // To avoid a meaningless update every time, skip it if undefined on MAL
+                case 'num_watched_times':
+                case 'num_read_times':
+                    {
+                        if (!this.malData.hasOwnProperty(key)) {
+                            return false;
+                        }
+                        if (this._postData[key] !== this.malData[key]) {
+                            return true;
+                        }
+                        ;
+                        return false;
+                    }
+                default:
+                    {
+                        // Treat falsy values as equivalent (!= doesn't do the trick here)
+                        if (!this._postData[key] && !this.malData[key]) {
+                            return false;
+                        }
+                        if (this._postData[key] !== this.malData[key]) {
+                            return true;
+                        }
+                        return false;
+                    }
+            }
+        });
+    }
+    shouldAdd() {
+        return !this.malData;
+    }
+    formData() {
+        throw new Error("Method not implemented.");
+    }
+    createPostData() {
+        throw new Error("Method not implemented.");
+    }
+    get type() {
+        return this.alData.type;
+    }
+    get id() {
+        return this.alData.id;
+    }
+    get title() {
+        return this.alData.title;
+    }
+    get postData() {
+        return this._postData;
+    }
+}
+exports.BaseMALEntry = BaseMALEntry;
+class MALEntryAnime extends BaseMALEntry {
+    constructor(al, mal, csrfToken) {
+        super(al, mal, csrfToken);
+    }
+    createPostData() {
+        const result = this.createBaseMALPostItem();
+        result.anime_id = this.alData.id;
+        if (this.alData.repeat)
+            result.num_watched_times = this.alData.repeat;
+        // If MAL episode count is available, use it as a maximum
+        // For new items it will not be present; however the list will refresh after add and
+        // it should be available then
+        result.num_watched_episodes = this.malData && this.malData.anime_num_episodes ?
+            Math.min(this.alData.progress, this.malData.anime_num_episodes) :
+            this.alData.progress || 0;
+        return result;
+    }
+    formData() {
+        const formData = {
+            anime_id: this.malData.anime_id,
+            aeps: this._postData.anime_num_episodes || 0,
+            astatus: this.malData.anime_airing_status,
+            'add_anime[status]': this._postData.status,
+            'add_anime[num_watched_episodes]': this._postData.num_watched_episodes || 0,
+            'add_anime[score]': this._postData.score,
+            'add_anime[start_date][month]': this._postData.start_date && this._postData.start_date.month || '',
+            'add_anime[start_date][day]': this._postData.start_date && this._postData.start_date.day || '',
+            'add_anime[start_date][year]': this._postData.start_date && this._postData.start_date.year || '',
+            'add_anime[finish_date][month]': this._postData.finish_date && this._postData.finish_date.month || '',
+            'add_anime[finish_date][day]': this._postData.finish_date && this._postData.finish_date.day || '',
+            'add_anime[finish_date][year]': this._postData.finish_date && this._postData.finish_date.year || '',
+            'add_anime[tags]': this.malData.tags || '',
+            'add_anime[priority]': 0,
+            'add_anime[storage_type]': '',
+            'add_anime[storage_value]': 0,
+            'add_anime[num_watched_times]': this._postData.num_watched_times || 0,
+            'add_anime[rewatch_value]': '',
+            'add_anime[comments]': '',
+            'add_anime[is_asked_to_discuss]': 0,
+            'add_anime[sns_post_type]': 0,
+            submitIt: 0,
+            csrf_token: this.csrfToken,
+        };
+        if (this.alData.status === 'REPEATING') {
+            formData['add_anime[is_rewatching]'] = 1;
+        }
+        return createMALFormData(formData);
+    }
+}
+exports.MALEntryAnime = MALEntryAnime;
+class MALEntryManga extends BaseMALEntry {
+    constructor(al, mal, csrfToken) {
+        super(al, mal, csrfToken);
+    }
+    createPostData() {
+        const result = this.createBaseMALPostItem();
+        result.manga_id = this.alData.id;
+        if (this.alData.repeat)
+            result.num_read_times = this.alData.repeat;
+        // If MAL chapter and volume counts are available, use them as a maximum
+        // For new items they will not be present; however the list will refresh after add and
+        // they should be available then
+        result.num_read_chapters = this.malData && this.malData.manga_num_chapters ?
+            Math.min(this.alData.progress, this.malData.manga_num_chapters) :
+            this.alData.progress || 0;
+        result.num_read_volumes = this.malData && this.malData.manga_num_volumes ?
+            Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes) :
+            this.alData.progressVolumes || 0;
+        return result;
+    }
+    formData() {
+        const formData = {
+            entry_id: 0,
+            manga_id: this.malData.manga_id,
+            'add_manga[status]': this._postData.status,
+            'add_manga[num_read_volumes]': this._postData.num_read_volumes || 0,
+            last_completed_vol: '',
+            'add_manga[num_read_chapters]': this._postData.num_read_chapters || 0,
+            'add_manga[score]': this._postData.score || '',
+            'add_manga[start_date][month]': this._postData.start_date && this._postData.start_date.month || '',
+            'add_manga[start_date][day]': this._postData.start_date && this._postData.start_date.day || '',
+            'add_manga[start_date][year]': this._postData.start_date && this._postData.start_date.year || '',
+            'add_manga[finish_date][month]': this._postData.finish_date && this._postData.finish_date.month || '',
+            'add_manga[finish_date][day]': this._postData.finish_date && this._postData.finish_date.day || '',
+            'add_manga[finish_date][year]': this._postData.finish_date && this._postData.finish_date.year || '',
+            'add_manga[tags]': this.malData.tags || '',
+            'add_manga[priority]': 0,
+            'add_manga[storage_type]': '',
+            'add_manga[num_retail_volumes]': this.malData.manga_num_volumes || 0,
+            'add_manga[num_read_times]': this._postData.num_read_times || 0,
+            'add_manga[reread_value]': '',
+            'add_manga[comments]': '',
+            'add_manga[is_asked_to_discuss]': 0,
+            'add_manga[sns_post_type]': 0,
+            csrf_token: this.csrfToken,
+            submitIt: 0
+        };
+        if (this.alData.status === 'REPEATING') {
+            formData['add_manga[is_rewatching]'] = 1;
+        }
+        return createMALFormData(formData);
+    }
+}
+exports.MALEntryManga = MALEntryManga;
 
 
 /***/ })
