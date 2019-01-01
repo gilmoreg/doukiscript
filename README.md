@@ -3,6 +3,9 @@
 ## Disclaimer
 Use this script at your own risk! The author assumes no responsibility for any damages of any kind. It is *strongly* recommended you test this out on a throwaway MAL account before attempting to sync your main account.
 
+## WARNING
+Using this script will clear out certain advanced settings such as Storage, Priority, SNS, and Dicussion settings. Do not use this script if you care about those settings.
+
 ## About
 So you're an Anilist user (perhaps you came over after MAL melted down) but you still want to keep your MAL page up to date for all your friends who still use it. Douki can sync your Anilist lists to MAL with the click of a button.
 

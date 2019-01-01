@@ -22,6 +22,7 @@ const importFormHTML = `
             <p><strong>NOTICE</strong>: Use this script at your own risk. The author takes no responsibility for any damages of any kind.</p>
             <p>It is <em>highly</em> recommended that you try this script out on a test MAL account before importing to your main account.</p>
             <p>Visit <a href="https://anilist.co/forum/thread/2654" target="_blank" rel="noopener noreferrer">the Anilist thread</a> for this script to ask questions or report problems.</p>
+            <p><strong>WARNING</strong>: Using this script will clear out certain advanced settings such as Storage, Priority, SNS, and Dicussion settings. Do not use this script if you care about those settings.</p>
             <p>Please be patient. If the import goes any faster you will be in violation of MyAnimeList's Terms of Service.</p>
         </div>
         <form id="${DOUKI_ANILIST_IMPORT_ID}" style="padding: 5px 0px 10px 0px">
