@@ -125,8 +125,8 @@ const setLocalStorageSetting = (setting: string, value: string) => {
 
 export const getDateSetting = (): string => {
     const dateSetting = document.querySelector(id(DATE_SETTING_ID)) as HTMLSelectElement;
-    if (!dateSetting) throw new Error('Unable to get date setting');
-    return dateSetting.value;
+    if (!dateSetting) console.error('Unable to get date setting');
+    return dateSetting && dateSetting.value || 'a';
 }
 
 export const getCSRFToken = (): string => {
@@ -147,4 +147,13 @@ export const getAnilistUsername = () => {
     const anilistUserElement = document.querySelector('#douki-anilist-username') as HTMLInputElement;
     if (!anilistUserElement) throw new Error('Unable to get Anilist username');
     return anilistUserElement.value;
+}
+
+export interface IDomMethods {
+    addDropDownItem(): void
+    addImportForm(syncFn: Function): void
+    getDateSetting(): string | null
+    getCSRFToken(): string | null
+    getMALUsername(): string | null
+    getAnilistUsername(): string | null
 }

@@ -1,8 +1,10 @@
 import * as Dom from './Dom';
 import * as T from "./Types";
 
-export const createMALEntry = (al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string) =>
-    al.type === 'anime' ? new MALEntryAnime(al, mal, csrfToken) : new MALEntryManga(al, mal, csrfToken);
+export const createMALEntry = (al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string, domMethods: Dom.IDomMethods) =>
+    al.type === 'anime' ?
+        new MALEntryAnime(al, mal, csrfToken, domMethods) :
+        new MALEntryManga(al, mal, csrfToken, domMethods);
 
 const MALStatus = {
     Current: 1,
@@ -32,18 +34,6 @@ const getStatus = (status: string) => {
     }
 }
 
-const buildDateString = (date: T.MediaDate) => {
-    if (date.month === 0 && date.day === 0 && date.year === 0) return null;
-    const dateSetting = Dom.getDateSetting();
-    const month = `${String(date.month).length < 2 ? '0' : ''}${date.month}`;
-    const day = `${String(date.day).length < 2 ? '0' : ''}${date.day}`;
-    const year = `${date.year ? String(date.year).slice(-2) : 0}`;
-    if (dateSetting === 'a') {
-        return `${month}-${day}-${year}`;
-    }
-    return `${day}-${month}-${year}`;
-}
-
 const createMALFormData = (malData: T.MALFormData): string => {
     let formData = '';
     Object.keys(malData).forEach(key => {
@@ -67,12 +57,14 @@ export class BaseMALEntry implements MALEntry {
     malData: T.MALLoadItem
     _postData: T.MALPostItem
     csrfToken: string
+    Dom: Dom.IDomMethods
 
-    constructor(al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string = '') {
+    constructor(al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string = '', dom: Dom.IDomMethods = Dom) {
         this.alData = al;
         this.malData = mal;
         this.csrfToken = csrfToken;
         this._postData = this.createPostData();
+        this.Dom = dom;
     }
 
     protected createBaseMALPostItem(): T.MALPostItem {
@@ -93,6 +85,18 @@ export class BaseMALEntry implements MALEntry {
         } as T.MALPostItem;
     }
 
+    buildDateString(date: T.MediaDate): string | null {
+        if (date.month === 0 && date.day === 0 && date.year === 0) return null;
+        const dateSetting = this.Dom.getDateSetting();
+        const month = `${String(date.month).length < 2 ? '0' : ''}${date.month}`;
+        const day = `${String(date.day).length < 2 ? '0' : ''}${date.day}`;
+        const year = `${date.year ? String(date.year).slice(-2) : 0}`;
+        if (dateSetting === 'a') {
+            return `${month}-${day}-${year}`;
+        }
+        return `${day}-${month}-${year}`;
+    }
+
     shouldUpdate(): boolean {
         return Object.keys(this._postData).some(key => {
             switch (key) {
@@ -104,7 +108,7 @@ export class BaseMALEntry implements MALEntry {
                 case 'finish_date':
                     {
                         // @ts-ignore
-                        const dateString = buildDateString(this._postData[key]);
+                        const dateString = this.buildDateString(this._postData[key]);
                         if (dateString !== this.malData[`${key}_string`]) {
                             return true;
                         }
@@ -180,8 +184,8 @@ export class BaseMALEntry implements MALEntry {
 }
 
 export class MALEntryAnime extends BaseMALEntry {
-    constructor(al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string) {
-        super(al, mal, csrfToken);
+    constructor(al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string, dom: Dom.IDomMethods = Dom) {
+        super(al, mal, csrfToken, dom);
     }
 
     createPostData(): T.MALPostItem {
@@ -234,8 +238,8 @@ export class MALEntryAnime extends BaseMALEntry {
 }
 
 export class MALEntryManga extends BaseMALEntry {
-    constructor(al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string) {
-        super(al, mal, csrfToken);
+    constructor(al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string, dom: Dom.IDomMethods = Dom) {
+        super(al, mal, csrfToken, dom);
     }
 
     createPostData(): T.MALPostItem {

@@ -1,12 +1,12 @@
 jest.mock('../src/Dom');
 jest.mock('../src/Log');
 jest.mock('../src/util');
-import { syncType, shouldUpdate, createMALData } from '../src/MAL';
+import { syncType } from '../src/MAL';
 import * as fetchMock from 'fetch-mock';
 import * as fakes from '../__testutils__/testData';
-import { MALItem } from '../src/Types';
+import { MALLoadItem } from '../src/Types';
 
-const mockGetMALList = (list: Array<MALItem>) => {
+const mockGetMALList = (list: Array<MALLoadItem>) => {
     fetchMock
         .mock(/.+load.json.+/, list, { repeat: 1 })
         .mock(/.+load.json.+/, []);
@@ -50,38 +50,4 @@ describe('syncType()', () => {
         const [url] = fetchMock.calls()[1];
         expect(url).toEqual('https://myanimelist.net/ownlist/manga/add.json');
     });
-});
-
-describe('shouldUpdate()', () => {
-    it('should update if the start date is different', () => {
-        const malAnime = fakes.createFakeMALAnime({ start_date_string: '2-2-2002' });
-        const alAnime = fakes.createFakeAnilistAnime({ startedAt: { year: 2002, month: 1, day: 1 } });
-        const alToMal = createMALData(alAnime, malAnime, 'csrfToken');
-        const result = shouldUpdate(malAnime, alToMal);
-        expect(result).toEqual(true);
-    });
-
-    it('should update if the episode count is different and show is incomplete', () => {
-        const malAnime = fakes.createFakeMALAnime({ status: 1, num_watched_episodes: 1 });
-        const alAnime = fakes.createFakeAnilistAnime({ status: 'CURRENT', proress: 2 });
-        const alToMal = createMALData(alAnime, malAnime, 'csrfToken');
-        const result = shouldUpdate(malAnime, alToMal);
-        expect(result).toEqual(true);
-    });
-
-    it('should not update if chapter counts differ but show is complete', () => {
-        const malAnime = fakes.createFakeMALAnime({ num_watched_episodes: 1 });
-        const alAnime = fakes.createFakeAnilistAnime({ progress: 2 });
-        const alToMal = createMALData(alAnime, malAnime, 'csrfToken');
-        const result = shouldUpdate(malAnime, alToMal);
-        expect(result).toEqual(false);
-    });
-
-    /*
-        NOTES:
-
-        The start_date vs start_date_string is a pain
-        in shouldUpdate() I check for start_date on AL and start_date_string on MAL
-        This is all well and good in the end but confusing
-    */
 });
