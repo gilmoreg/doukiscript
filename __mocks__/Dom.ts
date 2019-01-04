@@ -1,11 +1,30 @@
-export const addDropDownItem = () => { }
+import { IDomMethods } from "../src/Dom";
 
-export const addImportForm = (syncFn: Function) => jest.fn();
+export default class FakeDomMethods implements IDomMethods {
+    dateSetting: string
+    constructor(dateSetting = 'a') {
+        this.dateSetting = dateSetting;
+    }
 
-export const getDateSetting = (): string => 'a';
+    addDropDownItem() { }
 
-export const getCSRFToken = (): string => "csrfToken";
+    addImportForm(syncFn: Function) {
+        return jest.fn();
+    }
 
-export const getMALUsername = () => 'malUsername';
+    getDateSetting(): string {
+        return this.dateSetting;
+    };
 
-export const getAnilistUsername = () => 'anilistUsername';
+    getCSRFToken(): string {
+        return 'csrfToken';
+    }
+
+    getMALUsername(): string {
+        return 'malUsername';
+    }
+
+    getAnilistUsername(): string {
+        return 'anilistUsername';
+    }
+}
