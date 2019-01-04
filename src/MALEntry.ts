@@ -1,7 +1,7 @@
-import * as Dom from './Dom';
+import Dom, { IDomMethods } from './Dom';
 import * as T from "./Types";
 
-export const createMALEntry = (al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string, domMethods: Dom.IDomMethods) =>
+export const createMALEntry = (al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string, domMethods: IDomMethods) =>
     al.type === 'anime' ?
         new MALEntryAnime(al, mal, csrfToken, domMethods) :
         new MALEntryManga(al, mal, csrfToken, domMethods);
@@ -57,9 +57,9 @@ export class BaseMALEntry implements MALEntry {
     malData: T.MALLoadItem
     _postData: T.MALPostItem
     csrfToken: string
-    Dom: Dom.IDomMethods
+    Dom: IDomMethods
 
-    constructor(al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string = '', dom: Dom.IDomMethods = Dom) {
+    constructor(al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string = '', dom: IDomMethods = Dom) {
         this.alData = al;
         this.malData = mal;
         this.csrfToken = csrfToken;
@@ -184,7 +184,7 @@ export class BaseMALEntry implements MALEntry {
 }
 
 export class MALEntryAnime extends BaseMALEntry {
-    constructor(al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string, dom: Dom.IDomMethods = Dom) {
+    constructor(al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string, dom: IDomMethods = Dom) {
         super(al, mal, csrfToken, dom);
     }
 
@@ -238,7 +238,7 @@ export class MALEntryAnime extends BaseMALEntry {
 }
 
 export class MALEntryManga extends BaseMALEntry {
-    constructor(al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string, dom: Dom.IDomMethods = Dom) {
+    constructor(al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string, dom: IDomMethods = Dom) {
         super(al, mal, csrfToken, dom);
     }
 

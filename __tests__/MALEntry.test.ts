@@ -1,4 +1,4 @@
-import { MALEntry, createMALEntry } from '../src/MALEntry';
+import { createMALEntry } from '../src/MALEntry';
 import * as fakes from '../__testutils__/testData';
 
 const fakeDomMethods = fakes.createFakeDomMethods();
