@@ -1,7 +1,7 @@
-import * as Log from './Log';
-import * as Dom from './Dom';
+import Log from './Log';
+import Dom from './Dom';
 import { getAnilistList } from './Anilist';
-import { syncType } from './MAL';
+import MAL from './MAL';
 
 // Main business logic
 const sync = async (e: Event) => {
@@ -18,7 +18,6 @@ const sync = async (e: Event) => {
 
     const csrfToken = Dom.getCSRFToken();
 
-    console.clear();
     Log.clear();
     Log.info(`Fetching data from Anilist...`);
 
@@ -29,8 +28,9 @@ const sync = async (e: Event) => {
     }
     Log.info(`Fetched Anilist data.`);
 
-    await syncType('anime', anilistList.anime, malUsername, csrfToken);
-    await syncType('manga', anilistList.manga, malUsername, csrfToken);
+    const mal = new MAL(malUsername, csrfToken, Dom, Log);
+    await mal.syncType('anime', anilistList.anime);
+    await mal.syncType('manga', anilistList.manga);
     Log.info('Import complete.');
 };
 

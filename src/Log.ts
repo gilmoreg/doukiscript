@@ -1,55 +1,82 @@
 import { SYNC_LOG_ID, ERROR_LOG_ID } from './const';
 import { id, getOperationDisplayName } from './util';
 
-const getSyncLog = (): Element | null => document.querySelector(id(SYNC_LOG_ID));
-const getErrorLog = (): Element | null => document.querySelector(id(ERROR_LOG_ID));
-const getCountLog = (operation: string, type: string): Element | null => document.querySelector(id(`douki-${operation}-${type}-items`));
+type NullableElement = HTMLElement | null;
 
-const clearErrorLog = () => {
-    const errorLog = getErrorLog();
-    if (errorLog) {
-        errorLog.innerHTML = '';
+const getCountLog = (operation: string, type: string): NullableElement =>
+    document.querySelector(id(`douki-${operation}-${type}-items`));
+
+export interface ILog {
+    clear(type: string): void
+    error(msg: string): void
+    info(msg: string): void
+    addCountLog(operation: string, type: string, max: number): void
+    updateCountLog(operation: string, type: string, count: number): void
+}
+
+export class Log implements ILog {
+    errorLogElement: NullableElement = null;
+    syncLogElement: NullableElement = null;
+
+    get errorLog() {
+        if (!this.errorLogElement) {
+            this.errorLogElement = document.querySelector(id(ERROR_LOG_ID));
+        }
+        return this.errorLogElement;
+    }
+
+    get syncLog() {
+        if (!this.syncLogElement) {
+            this.syncLogElement = document.querySelector(id(SYNC_LOG_ID));
+        }
+        return this.syncLogElement;
+    }
+
+    private clearErrorLog() {
+        if (this.errorLog) {
+            this.errorLog.innerHTML = '';
+        }
+    }
+
+    private clearSyncLog() {
+        if (this.syncLog) {
+            this.syncLog.innerHTML = '';
+        }
+    }
+
+    clear(type = '') {
+        console.clear();
+        if (type !== 'error') this.clearSyncLog();
+        if (type !== 'sync') this.clearErrorLog();
+    }
+
+    error(msg: string) {
+        if (this.errorLog) {
+            this.errorLog.innerHTML += `<li>${msg}</li>`;
+        } else {
+            console.error(msg);
+        }
+    }
+
+    info(msg: string) {
+        if (this.syncLog) {
+            this.syncLog.innerHTML += `<li>${msg}</li>`;
+        } else {
+            console.info(msg);
+        }
+    }
+
+    addCountLog(operation: string, type: string, max: number) {
+        const opName = getOperationDisplayName(operation);
+        const logId = `douki-${operation}-${type}-items`;
+        this.info(`${opName} <span id="${logId}">0</span> of ${max} ${type} items.`);
+    }
+
+    updateCountLog(operation: string, type: string, count: number) {
+        const countLog = getCountLog(operation, type) as HTMLSpanElement;
+        if (!countLog) return;
+        countLog.innerHTML = `${count}`;
     }
 }
 
-const clearSyncLog = () => {
-    const syncLog = getSyncLog();
-    if (syncLog) {
-        syncLog.innerHTML = '';
-    }
-}
-
-export const clear = (type = '') => {
-    if (type !== 'error') clearSyncLog();
-    if (type !== 'sync') clearErrorLog();
-}
-
-export const error = (msg: string) => {
-    const errorLog = getErrorLog();
-    if (errorLog) {
-        errorLog.innerHTML += `<li>${msg}</li>`;
-    } else {
-        console.error(msg);
-    }
-}
-
-export const info = (msg: string) => {
-    const syncLog = getSyncLog();
-    if (syncLog) {
-        syncLog.innerHTML += `<li>${msg}</li>`;
-    } else {
-        console.info(msg);
-    }
-}
-
-export const addCountLog = (operation: string, type: string, max: number) => {
-    const opName = getOperationDisplayName(operation);
-    const logId = `douki-${operation}-${type}-items`;
-    info(`${opName} <span id="${logId}">0</span> of ${max} ${type} items.`);
-}
-
-export const updateCountLog = (operation: string, type: string, count: number) => {
-    const countLog = getCountLog(operation, type) as HTMLSpanElement;
-    if (!countLog) return;
-    countLog.innerHTML = `${count}`;
-}
+export default new Log();

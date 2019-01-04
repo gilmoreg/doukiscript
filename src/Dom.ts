@@ -47,68 +47,6 @@ const importFormHTML = `
     </div>
 `;
 
-export const addDropDownItem = () => {
-    if (document.querySelector(id(DROPDOWN_ITEM_ID))) return;
-    const selector = '.header-menu-dropdown > ul > li:last-child';
-    const dropdown = document.querySelector(selector);
-    if (dropdown) {
-        const html = `<li><a aria-role="button" id="${DROPDOWN_ITEM_ID}">Import from Anilist</a></li>`;
-        dropdown.insertAdjacentHTML('afterend', html);
-        const link = document.querySelector(id(DROPDOWN_ITEM_ID));
-        link && link.addEventListener('click', function (e) {
-            e.preventDefault();
-            window.location.replace('https://myanimelist.net/import.php');
-        });
-    }
-}
-
-export const addImportForm = (syncFn: Function) => {
-    if (document.querySelector(id(DOUKI_FORM_ID))) return;
-    const element = document.querySelector(id(CONTENT_ID));
-    if (!element) {
-        throw new Error('Unable to add form to page');
-    }
-    element.insertAdjacentHTML('afterend', importFormHTML);
-    addImportFormEventListeners(syncFn);
-}
-
-// TODO break this up
-const addImportFormEventListeners = (syncFn: Function) => {
-    const importButton = document.querySelector(id(DOUKI_IMPORT_BUTTON_ID));
-    importButton && importButton.addEventListener('click', function (e) {
-        syncFn(e);
-    });
-
-    const textBox = document.querySelector(id(ANILIST_USERNAME_ID)) as HTMLInputElement;
-    textBox && textBox.addEventListener('change', function (e: any) {
-        setLocalStorageSetting(SETTINGS_KEY, e.target.value);
-    });
-    const username = getLocalStorageSetting(SETTINGS_KEY);
-    if (username && textBox) {
-        textBox.value = username;
-    }
-
-    const dateFormatPicker = document.querySelector(id(DATE_SETTING_ID)) as HTMLSelectElement;
-    dateFormatPicker && dateFormatPicker.addEventListener('change', function (e: any) {
-        setLocalStorageSetting(DATE_SETTINGS_KEY, e.target.value);
-    });
-    const dateOption = getLocalStorageSetting(DATE_SETTINGS_KEY);
-    if (dateOption && dateFormatPicker) {
-        dateFormatPicker.value = dateOption;
-    }
-
-    const errorToggle = document.querySelector(id(ERROR_LOG_TOGGLE_ID)) as HTMLButtonElement;
-    errorToggle && errorToggle.addEventListener('click', function (e) {
-        e.preventDefault();
-        const errorLog = document.querySelector(id(ERROR_LOG_DIV_ID)) as HTMLElement;
-        if (errorLog.style.display === 'none') {
-            errorLog.style.display = 'block';
-        } else {
-            errorLog.style.display = 'none';
-        }
-    });
-}
-
 const getLocalStorageSetting = (setting: string): string | null => {
     if (localStorage) {
         const value = localStorage.getItem(setting);
@@ -123,32 +61,6 @@ const setLocalStorageSetting = (setting: string, value: string) => {
     }
 }
 
-export const getDateSetting = (): string => {
-    const dateSetting = document.querySelector(id(DATE_SETTING_ID)) as HTMLSelectElement;
-    if (!dateSetting) console.error('Unable to get date setting');
-    return dateSetting && dateSetting.value || 'a';
-}
-
-export const getCSRFToken = (): string => {
-    const csrfTokenMeta = document.querySelector('meta[name~="csrf_token"]');
-    if (!csrfTokenMeta) throw new Error('Unable to get CSRF token - no meta element');
-    const csrfToken = csrfTokenMeta.getAttribute('content');
-    if (!csrfToken) throw new Error('Unable to get CSRF token - no content attribute');
-    return csrfToken;
-}
-
-export const getMALUsername = () => {
-    const malUsernameElement = document.querySelector('.header-profile-link') as HTMLDivElement;
-    if (!malUsernameElement) return null;
-    return malUsernameElement.innerText;
-}
-
-export const getAnilistUsername = () => {
-    const anilistUserElement = document.querySelector('#douki-anilist-username') as HTMLInputElement;
-    if (!anilistUserElement) throw new Error('Unable to get Anilist username');
-    return anilistUserElement.value;
-}
-
 export interface IDomMethods {
     addDropDownItem(): void
     addImportForm(syncFn: Function): void
@@ -157,3 +69,102 @@ export interface IDomMethods {
     getMALUsername(): string | null
     getAnilistUsername(): string | null
 }
+
+export class DomMethods implements IDomMethods {
+    csrfToken: string | null = null;
+    dateSetting: string | null = null;
+
+    addDropDownItem() {
+        if (document.querySelector(id(DROPDOWN_ITEM_ID))) return;
+        const selector = '.header-menu-dropdown > ul > li:last-child';
+        const dropdown = document.querySelector(selector);
+        if (dropdown) {
+            const html = `<li><a aria-role="button" id="${DROPDOWN_ITEM_ID}">Import from Anilist</a></li>`;
+            dropdown.insertAdjacentHTML('afterend', html);
+            const link = document.querySelector(id(DROPDOWN_ITEM_ID));
+            link && link.addEventListener('click', function (e) {
+                e.preventDefault();
+                window.location.replace('https://myanimelist.net/import.php');
+            });
+        }
+    }
+
+    addImportForm(syncFn: Function) {
+        if (document.querySelector(id(DOUKI_FORM_ID))) return;
+        const element = document.querySelector(id(CONTENT_ID));
+        if (!element) {
+            throw new Error('Unable to add form to page');
+        }
+        element.insertAdjacentHTML('afterend', importFormHTML);
+        this.addImportFormEventListeners(syncFn);
+    }
+
+    // TODO break this up
+    addImportFormEventListeners(syncFn: Function) {
+        const importButton = document.querySelector(id(DOUKI_IMPORT_BUTTON_ID));
+        importButton && importButton.addEventListener('click', function (e) {
+            syncFn(e);
+        });
+
+        const textBox = document.querySelector(id(ANILIST_USERNAME_ID)) as HTMLInputElement;
+        textBox && textBox.addEventListener('change', function (e: any) {
+            setLocalStorageSetting(SETTINGS_KEY, e.target.value);
+        });
+        const username = getLocalStorageSetting(SETTINGS_KEY);
+        if (username && textBox) {
+            textBox.value = username;
+        }
+
+        const dateFormatPicker = document.querySelector(id(DATE_SETTING_ID)) as HTMLSelectElement;
+        dateFormatPicker && dateFormatPicker.addEventListener('change', function (e: any) {
+            setLocalStorageSetting(DATE_SETTINGS_KEY, e.target.value);
+        });
+        const dateOption = getLocalStorageSetting(DATE_SETTINGS_KEY);
+        if (dateOption && dateFormatPicker) {
+            dateFormatPicker.value = dateOption;
+        }
+
+        const errorToggle = document.querySelector(id(ERROR_LOG_TOGGLE_ID)) as HTMLButtonElement;
+        errorToggle && errorToggle.addEventListener('click', function (e) {
+            e.preventDefault();
+            const errorLog = document.querySelector(id(ERROR_LOG_DIV_ID)) as HTMLElement;
+            if (errorLog.style.display === 'none') {
+                errorLog.style.display = 'block';
+            } else {
+                errorLog.style.display = 'none';
+            }
+        });
+    }
+
+    getDateSetting(): string {
+        if (this.dateSetting) return this.dateSetting;
+        const dateSetting = document.querySelector(id(DATE_SETTING_ID)) as HTMLSelectElement;
+        if (!dateSetting || !dateSetting.value) throw new Error('Unable to get date setting');
+        this.dateSetting = dateSetting.value;
+        return this.dateSetting;
+    }
+
+    getCSRFToken(): string {
+        if (this.csrfToken) return this.csrfToken;
+        const csrfTokenMeta = document.querySelector('meta[name~="csrf_token"]');
+        if (!csrfTokenMeta) throw new Error('Unable to get CSRF token - no meta element');
+        const csrfToken = csrfTokenMeta.getAttribute('content');
+        if (!csrfToken) throw new Error('Unable to get CSRF token - no content attribute');
+        this.csrfToken = csrfToken;
+        return csrfToken;
+    }
+
+    getMALUsername(): string | null {
+        const malUsernameElement = document.querySelector('.header-profile-link') as HTMLDivElement;
+        if (!malUsernameElement) return null;
+        return malUsernameElement.innerText;
+    }
+
+    getAnilistUsername(): string {
+        const anilistUserElement = document.querySelector('#douki-anilist-username') as HTMLInputElement;
+        if (!anilistUserElement) throw new Error('Unable to get Anilist username');
+        return anilistUserElement.value;
+    }
+}
+
+export default new DomMethods();
