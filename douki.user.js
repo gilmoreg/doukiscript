@@ -99,41 +99,41 @@
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Log = __webpack_require__(1);
-const Dom = __webpack_require__(4);
+const Log_1 = __webpack_require__(1);
+const Dom_1 = __webpack_require__(4);
 const Anilist_1 = __webpack_require__(5);
 const MAL_1 = __webpack_require__(6);
 // Main business logic
 const sync = async (e) => {
     e.preventDefault();
-    const anilistUsername = Dom.getAnilistUsername();
+    const anilistUsername = Dom_1.default.getAnilistUsername();
     if (!anilistUsername)
         return;
-    const malUsername = Dom.getMALUsername();
+    const malUsername = Dom_1.default.getMALUsername();
     if (!malUsername) {
-        Log.info('You must be logged in!');
+        Log_1.default.info('You must be logged in!');
         return;
     }
-    const csrfToken = Dom.getCSRFToken();
-    console.clear();
-    Log.clear();
-    Log.info(`Fetching data from Anilist...`);
+    const csrfToken = Dom_1.default.getCSRFToken();
+    Log_1.default.clear();
+    Log_1.default.info(`Fetching data from Anilist...`);
     const anilistList = await Anilist_1.getAnilistList(anilistUsername);
     if (!anilistList) {
-        Log.info(`No data found for user ${anilistUsername}.`);
+        Log_1.default.info(`No data found for user ${anilistUsername}.`);
         return;
     }
-    Log.info(`Fetched Anilist data.`);
-    await MAL_1.syncType('anime', anilistList.anime, malUsername, csrfToken);
-    await MAL_1.syncType('manga', anilistList.manga, malUsername, csrfToken);
-    Log.info('Import complete.');
+    Log_1.default.info(`Fetched Anilist data.`);
+    const mal = new MAL_1.default(malUsername, csrfToken, Dom_1.default, Log_1.default);
+    await mal.syncType('anime', anilistList.anime);
+    await mal.syncType('manga', anilistList.manga);
+    Log_1.default.info('Import complete.');
 };
 // Entrypoint
 (() => {
     'use strict';
-    Dom.addDropDownItem();
+    Dom_1.default.addDropDownItem();
     if (window.location.pathname === '/import.php') {
-        Dom.addImportForm(sync);
+        Dom_1.default.addImportForm(sync);
     }
 })();
 
@@ -147,56 +147,71 @@ const sync = async (e) => {
 Object.defineProperty(exports, "__esModule", { value: true });
 const const_1 = __webpack_require__(2);
 const util_1 = __webpack_require__(3);
-const getSyncLog = () => document.querySelector(util_1.id(const_1.SYNC_LOG_ID));
-const getErrorLog = () => document.querySelector(util_1.id(const_1.ERROR_LOG_ID));
 const getCountLog = (operation, type) => document.querySelector(util_1.id(`douki-${operation}-${type}-items`));
-const clearErrorLog = () => {
-    const errorLog = getErrorLog();
-    if (errorLog) {
-        errorLog.innerHTML = '';
+class Log {
+    constructor() {
+        this.errorLogElement = null;
+        this.syncLogElement = null;
     }
-};
-const clearSyncLog = () => {
-    const syncLog = getSyncLog();
-    if (syncLog) {
-        syncLog.innerHTML = '';
+    get errorLog() {
+        if (!this.errorLogElement) {
+            this.errorLogElement = document.querySelector(util_1.id(const_1.ERROR_LOG_ID));
+        }
+        return this.errorLogElement;
     }
-};
-exports.clear = (type = '') => {
-    if (type !== 'error')
-        clearSyncLog();
-    if (type !== 'sync')
-        clearErrorLog();
-};
-exports.error = (msg) => {
-    const errorLog = getErrorLog();
-    if (errorLog) {
-        errorLog.innerHTML += `<li>${msg}</li>`;
+    get syncLog() {
+        if (!this.syncLogElement) {
+            this.syncLogElement = document.querySelector(util_1.id(const_1.SYNC_LOG_ID));
+        }
+        return this.syncLogElement;
     }
-    else {
-        console.error(msg);
+    clearErrorLog() {
+        if (this.errorLog) {
+            this.errorLog.innerHTML = '';
+        }
     }
-};
-exports.info = (msg) => {
-    const syncLog = getSyncLog();
-    if (syncLog) {
-        syncLog.innerHTML += `<li>${msg}</li>`;
+    clearSyncLog() {
+        if (this.syncLog) {
+            this.syncLog.innerHTML = '';
+        }
     }
-    else {
-        console.info(msg);
+    clear(type = '') {
+        console.clear();
+        if (type !== 'error')
+            this.clearSyncLog();
+        if (type !== 'sync')
+            this.clearErrorLog();
     }
-};
-exports.addCountLog = (operation, type, max) => {
-    const opName = util_1.getOperationDisplayName(operation);
-    const logId = `douki-${operation}-${type}-items`;
-    exports.info(`${opName} <span id="${logId}">0</span> of ${max} ${type} items.`);
-};
-exports.updateCountLog = (operation, type, count) => {
-    const countLog = getCountLog(operation, type);
-    if (!countLog)
-        return;
-    countLog.innerHTML = `${count}`;
-};
+    error(msg) {
+        if (this.errorLog) {
+            this.errorLog.innerHTML += `<li>${msg}</li>`;
+        }
+        else {
+            console.error(msg);
+        }
+    }
+    info(msg) {
+        if (this.syncLog) {
+            this.syncLog.innerHTML += `<li>${msg}</li>`;
+        }
+        else {
+            console.info(msg);
+        }
+    }
+    addCountLog(operation, type, max) {
+        const opName = util_1.getOperationDisplayName(operation);
+        const logId = `douki-${operation}-${type}-items`;
+        this.info(`${opName} <span id="${logId}">0</span> of ${max} ${type} items.`);
+    }
+    updateCountLog(operation, type, count) {
+        const countLog = getCountLog(operation, type);
+        if (!countLog)
+            return;
+        countLog.innerHTML = `${count}`;
+    }
+}
+exports.Log = Log;
+exports.default = new Log();
 
 
 /***/ }),
@@ -284,65 +299,6 @@ const importFormHTML = `
         </div>
     </div>
 `;
-exports.addDropDownItem = () => {
-    if (document.querySelector(util_1.id(const_1.DROPDOWN_ITEM_ID)))
-        return;
-    const selector = '.header-menu-dropdown > ul > li:last-child';
-    const dropdown = document.querySelector(selector);
-    if (dropdown) {
-        const html = `<li><a aria-role="button" id="${const_1.DROPDOWN_ITEM_ID}">Import from Anilist</a></li>`;
-        dropdown.insertAdjacentHTML('afterend', html);
-        const link = document.querySelector(util_1.id(const_1.DROPDOWN_ITEM_ID));
-        link && link.addEventListener('click', function (e) {
-            e.preventDefault();
-            window.location.replace('https://myanimelist.net/import.php');
-        });
-    }
-};
-exports.addImportForm = (syncFn) => {
-    if (document.querySelector(util_1.id(const_1.DOUKI_FORM_ID)))
-        return;
-    const element = document.querySelector(util_1.id(const_1.CONTENT_ID));
-    if (!element) {
-        throw new Error('Unable to add form to page');
-    }
-    element.insertAdjacentHTML('afterend', importFormHTML);
-    addImportFormEventListeners(syncFn);
-};
-// TODO break this up
-const addImportFormEventListeners = (syncFn) => {
-    const importButton = document.querySelector(util_1.id(const_1.DOUKI_IMPORT_BUTTON_ID));
-    importButton && importButton.addEventListener('click', function (e) {
-        syncFn(e);
-    });
-    const textBox = document.querySelector(util_1.id(const_1.ANILIST_USERNAME_ID));
-    textBox && textBox.addEventListener('change', function (e) {
-        setLocalStorageSetting(const_1.SETTINGS_KEY, e.target.value);
-    });
-    const username = getLocalStorageSetting(const_1.SETTINGS_KEY);
-    if (username && textBox) {
-        textBox.value = username;
-    }
-    const dateFormatPicker = document.querySelector(util_1.id(const_1.DATE_SETTING_ID));
-    dateFormatPicker && dateFormatPicker.addEventListener('change', function (e) {
-        setLocalStorageSetting(const_1.DATE_SETTINGS_KEY, e.target.value);
-    });
-    const dateOption = getLocalStorageSetting(const_1.DATE_SETTINGS_KEY);
-    if (dateOption && dateFormatPicker) {
-        dateFormatPicker.value = dateOption;
-    }
-    const errorToggle = document.querySelector(util_1.id(const_1.ERROR_LOG_TOGGLE_ID));
-    errorToggle && errorToggle.addEventListener('click', function (e) {
-        e.preventDefault();
-        const errorLog = document.querySelector(util_1.id(const_1.ERROR_LOG_DIV_ID));
-        if (errorLog.style.display === 'none') {
-            errorLog.style.display = 'block';
-        }
-        else {
-            errorLog.style.display = 'none';
-        }
-    });
-};
 const getLocalStorageSetting = (setting) => {
     if (localStorage) {
         const value = localStorage.getItem(setting);
@@ -356,33 +312,106 @@ const setLocalStorageSetting = (setting, value) => {
         localStorage.setItem(setting, JSON.stringify(value));
     }
 };
-exports.getDateSetting = () => {
-    const dateSetting = document.querySelector(util_1.id(const_1.DATE_SETTING_ID));
-    if (!dateSetting)
-        throw new Error('Unable to get date setting');
-    return dateSetting.value;
-};
-exports.getCSRFToken = () => {
-    const csrfTokenMeta = document.querySelector('meta[name~="csrf_token"]');
-    if (!csrfTokenMeta)
-        throw new Error('Unable to get CSRF token - no meta element');
-    const csrfToken = csrfTokenMeta.getAttribute('content');
-    if (!csrfToken)
-        throw new Error('Unable to get CSRF token - no content attribute');
-    return csrfToken;
-};
-exports.getMALUsername = () => {
-    const malUsernameElement = document.querySelector('.header-profile-link');
-    if (!malUsernameElement)
-        return null;
-    return malUsernameElement.innerText;
-};
-exports.getAnilistUsername = () => {
-    const anilistUserElement = document.querySelector('#douki-anilist-username');
-    if (!anilistUserElement)
-        throw new Error('Unable to get Anilist username');
-    return anilistUserElement.value;
-};
+class DomMethods {
+    constructor() {
+        this.csrfToken = null;
+        this.dateSetting = null;
+    }
+    addDropDownItem() {
+        if (document.querySelector(util_1.id(const_1.DROPDOWN_ITEM_ID)))
+            return;
+        const selector = '.header-menu-dropdown > ul > li:last-child';
+        const dropdown = document.querySelector(selector);
+        if (dropdown) {
+            const html = `<li><a aria-role="button" id="${const_1.DROPDOWN_ITEM_ID}">Import from Anilist</a></li>`;
+            dropdown.insertAdjacentHTML('afterend', html);
+            const link = document.querySelector(util_1.id(const_1.DROPDOWN_ITEM_ID));
+            link && link.addEventListener('click', function (e) {
+                e.preventDefault();
+                window.location.replace('https://myanimelist.net/import.php');
+            });
+        }
+    }
+    addImportForm(syncFn) {
+        if (document.querySelector(util_1.id(const_1.DOUKI_FORM_ID)))
+            return;
+        const element = document.querySelector(util_1.id(const_1.CONTENT_ID));
+        if (!element) {
+            throw new Error('Unable to add form to page');
+        }
+        element.insertAdjacentHTML('afterend', importFormHTML);
+        this.addImportFormEventListeners(syncFn);
+    }
+    // TODO break this up
+    addImportFormEventListeners(syncFn) {
+        const importButton = document.querySelector(util_1.id(const_1.DOUKI_IMPORT_BUTTON_ID));
+        importButton && importButton.addEventListener('click', function (e) {
+            syncFn(e);
+        });
+        const textBox = document.querySelector(util_1.id(const_1.ANILIST_USERNAME_ID));
+        textBox && textBox.addEventListener('change', function (e) {
+            setLocalStorageSetting(const_1.SETTINGS_KEY, e.target.value);
+        });
+        const username = getLocalStorageSetting(const_1.SETTINGS_KEY);
+        if (username && textBox) {
+            textBox.value = username;
+        }
+        const dateFormatPicker = document.querySelector(util_1.id(const_1.DATE_SETTING_ID));
+        dateFormatPicker && dateFormatPicker.addEventListener('change', function (e) {
+            setLocalStorageSetting(const_1.DATE_SETTINGS_KEY, e.target.value);
+        });
+        const dateOption = getLocalStorageSetting(const_1.DATE_SETTINGS_KEY);
+        if (dateOption && dateFormatPicker) {
+            dateFormatPicker.value = dateOption;
+        }
+        const errorToggle = document.querySelector(util_1.id(const_1.ERROR_LOG_TOGGLE_ID));
+        errorToggle && errorToggle.addEventListener('click', function (e) {
+            e.preventDefault();
+            const errorLog = document.querySelector(util_1.id(const_1.ERROR_LOG_DIV_ID));
+            if (errorLog.style.display === 'none') {
+                errorLog.style.display = 'block';
+            }
+            else {
+                errorLog.style.display = 'none';
+            }
+        });
+    }
+    getDateSetting() {
+        if (this.dateSetting)
+            return this.dateSetting;
+        const dateSetting = document.querySelector(util_1.id(const_1.DATE_SETTING_ID));
+        if (!dateSetting || !dateSetting.value)
+            throw new Error('Unable to get date setting');
+        this.dateSetting = dateSetting.value;
+        return this.dateSetting;
+    }
+    getCSRFToken() {
+        if (this.csrfToken)
+            return this.csrfToken;
+        const csrfTokenMeta = document.querySelector('meta[name~="csrf_token"]');
+        if (!csrfTokenMeta)
+            throw new Error('Unable to get CSRF token - no meta element');
+        const csrfToken = csrfTokenMeta.getAttribute('content');
+        if (!csrfToken)
+            throw new Error('Unable to get CSRF token - no content attribute');
+        this.csrfToken = csrfToken;
+        return csrfToken;
+    }
+    getMALUsername() {
+        const malUsernameElement = document.querySelector('.header-profile-link');
+        if (!malUsernameElement)
+            return null;
+        return malUsernameElement.innerText;
+    }
+    getAnilistUsername() {
+        const anilistUserElement = document.querySelector('#douki-anilist-username');
+        if (!anilistUserElement)
+            throw new Error('Unable to get Anilist username');
+        return anilistUserElement.value;
+    }
+}
+exports.DomMethods = DomMethods;
+exports.default = new DomMethods();
 
 
 /***/ }),
@@ -392,7 +421,7 @@ exports.getAnilistUsername = () => {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Log = __webpack_require__(1);
+const Log_1 = __webpack_require__(1);
 const flatten = (obj) => 
 // Outer reduce concats arrays built by inner reduce
 Object.keys(obj).reduce((accumulator, list) => 
@@ -504,7 +533,7 @@ const sanitize = (item, type) => ({
 const filterNoMalId = (item) => {
     if (item.id)
         return true;
-    Log.error(`${item.type}: ${item.title}`);
+    Log_1.default.error(`${item.type}: ${item.title}`);
     return false;
 };
 exports.getAnilistList = (username) => fetchList(username)
@@ -526,110 +555,122 @@ exports.getAnilistList = (username) => fetchList(username)
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_1 = __webpack_require__(3);
-const Log = __webpack_require__(1);
+const Log_1 = __webpack_require__(1);
 const MALEntry_1 = __webpack_require__(7);
-const createMALHashMap = (malList, type) => {
-    const hashMap = {};
-    malList.forEach(item => {
-        hashMap[item[`${type}_id`]] = item;
-    });
-    return hashMap;
-};
-const getMALHashMap = async (type, username, list = [], page = 1) => {
-    const offset = (page - 1) * 300;
-    const nextList = await fetch(`https://myanimelist.net/${type}list/${username}/load.json?offset=${offset}&status=7`)
-        .then(async (res) => {
-        if (res.status !== 200) {
-            await util_1.sleep(2000);
-            return getMALHashMap(type, username, list, page);
-        }
-        return res.json();
-    });
-    if (nextList && nextList.length) {
-        await util_1.sleep(1500);
-        return getMALHashMap(type, username, [...list, ...nextList], page + 1);
+const Dom_1 = __webpack_require__(4);
+class MAL {
+    constructor(username, csrfToken, dom = Dom_1.default, log = Log_1.default) {
+        this.username = username;
+        this.csrfToken = csrfToken;
+        this.Dom = dom;
+        this.Log = log;
     }
-    Log.info(`Fetched MyAnimeList ${type} list.`);
-    return createMALHashMap([...list, ...nextList], type);
-};
-const getEntriesList = async (anilistList, type, malUsername, csrfToken) => {
-    const malHashMap = await getMALHashMap(type, malUsername);
-    return anilistList.map(entry => MALEntry_1.createMALEntry(entry, malHashMap[entry.id], csrfToken));
-};
-const malEdit = (data) => {
-    const { type, id } = data;
-    return fetch(`https://myanimelist.net/ownlist/${type}/${id}/edit?hideLayout`, {
-        credentials: 'include',
-        headers: {
-            accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-            'accept-language': 'en-US,en;q=0.9,ja;q=0.8',
-            'cache-control': 'max-age=0',
-            'content-type': 'application/x-www-form-urlencoded',
-            'upgrade-insecure-requests': '1'
-        },
-        referrer: `https://myanimelist.net/ownlist/${type}/${id}/edit?hideLayout`,
-        referrerPolicy: 'no-referrer-when-downgrade',
-        body: data.formData(),
-        method: 'POST',
-        mode: 'cors'
-    }).then((res) => {
-        // TODO figure out how to error check the html that comes back
-        if (res.status === 200)
-            return res;
-        throw new Error(JSON.stringify(data));
-    }).then((res) => res.text())
-        .then((text) => {
-        if (text.match(/.+Successfully updated entry.+/))
-            return true;
-        throw new Error(JSON.stringify(data));
-    });
-};
-const malAdd = (data) => fetch(`https://myanimelist.net/ownlist/${data.type}/add.json`, {
-    method: 'post',
-    headers: {
-        'Accept': '*/*',
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'x-requested-with': 'XMLHttpRequest'
-    },
-    body: JSON.stringify(data.postData)
-})
-    .then((res) => {
-    if (res.status === 200)
-        return res;
-    throw new Error(JSON.stringify(data));
-});
-const syncList = async (type, list, operation) => {
-    if (!list || !list.length) {
-        return;
+    createMALHashMap(malList, type) {
+        const hashMap = {};
+        malList.forEach(item => {
+            hashMap[item[`${type}_id`]] = item;
+        });
+        return hashMap;
     }
-    Log.addCountLog(operation, type, list.length);
-    let itemCount = 0;
-    // This uses malEdit() for 'completed' as well
-    const fn = operation === 'add' ? malAdd : malEdit;
-    for (let item of list) {
-        await util_1.sleep(500);
-        try {
-            await fn(item);
-            itemCount++;
-            Log.updateCountLog(operation, type, itemCount);
+    async getMALHashMap(type, list = [], page = 1) {
+        const offset = (page - 1) * 300;
+        const nextList = await fetch(`https://myanimelist.net/${type}list/${this.username}/load.json?offset=${offset}&status=7`)
+            .then(async (res) => {
+            if (res.status !== 200) {
+                await util_1.sleep(2000);
+                return this.getMALHashMap(type, list, page);
+            }
+            return res.json();
+        });
+        if (nextList && nextList.length) {
+            await util_1.sleep(1500);
+            return this.getMALHashMap(type, [...list, ...nextList], page + 1);
         }
-        catch (e) {
-            console.error(e);
-            Log.info(`Error for ${type} <a href="https://myanimelist.net/${type}/${item.id}" target="_blank" rel="noopener noreferrer">${item.title}</a>. Try adding or updating it manually.`);
+        this.Log.info(`Fetched MyAnimeList ${type} list.`);
+        return this.createMALHashMap([...list, ...nextList], type);
+    }
+    async getEntriesList(anilistList, type) {
+        const malHashMap = await this.getMALHashMap(type);
+        return anilistList.map(entry => MALEntry_1.createMALEntry(entry, malHashMap[entry.id], this.csrfToken, this.Dom));
+    }
+    malEdit(data) {
+        const { type, id } = data;
+        return fetch(`https://myanimelist.net/ownlist/${type}/${id}/edit?hideLayout`, {
+            credentials: 'include',
+            headers: {
+                accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+                'accept-language': 'en-US,en;q=0.9,ja;q=0.8',
+                'cache-control': 'max-age=0',
+                'content-type': 'application/x-www-form-urlencoded',
+                'upgrade-insecure-requests': '1'
+            },
+            referrer: `https://myanimelist.net/ownlist/${type}/${id}/edit?hideLayout`,
+            referrerPolicy: 'no-referrer-when-downgrade',
+            body: data.formData(),
+            method: 'POST',
+            mode: 'cors'
+        }).then((res) => {
+            if (res.status === 200)
+                return res;
+            throw new Error(`Error updating ${type} id ${id}`);
+        }).then((res) => res.text())
+            .then((text) => {
+            if (text.match(/.+Successfully updated entry.+/))
+                return;
+            throw new Error(`Error updating ${type} id ${id}`);
+        });
+    }
+    malAdd(data) {
+        return fetch(`https://myanimelist.net/ownlist/${data.type}/add.json`, {
+            method: 'post',
+            headers: {
+                'Accept': '*/*',
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'x-requested-with': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(data.postData)
+        })
+            .then((res) => {
+            if (res.status === 200)
+                return res;
+            throw new Error(JSON.stringify(data));
+        });
+    }
+    async syncList(type, list, operation) {
+        if (!list || !list.length) {
+            return;
+        }
+        this.Log.addCountLog(operation, type, list.length);
+        let itemCount = 0;
+        const fn = operation === 'add' ? this.malAdd : this.malEdit;
+        for (let item of list) {
+            await util_1.sleep(500);
+            try {
+                await fn(item);
+                itemCount++;
+                this.Log.updateCountLog(operation, type, itemCount);
+            }
+            catch (e) {
+                console.error(e);
+                this.Log.info(`Error for ${type} <a href="https://myanimelist.net/${type}/${item.id}" target="_blank" rel="noopener noreferrer">${item.title}</a>. Try adding or updating it manually.`);
+            }
         }
     }
-};
-exports.syncType = async (type, anilistList, malUsername, csrfToken) => {
-    Log.info(`Fetching MyAnimeList ${type} list...`);
-    let list = await getEntriesList(anilistList, type, malUsername, csrfToken);
-    const addList = list.filter(entry => entry.shouldAdd());
-    await syncList(type, addList, 'add');
-    // Refresh list to get episode/chapter counts of new completed items
-    Log.info(`Refreshing MyAnimeList ${type} list...`);
-    list = await getEntriesList(anilistList, type, malUsername, csrfToken);
-    const updateList = list.filter(entry => entry.shouldUpdate());
-    await syncList(type, updateList, 'edit');
-};
+    async syncType(type, anilistList) {
+        this.Log.info(`Fetching MyAnimeList ${type} list...`);
+        let list = await this.getEntriesList(anilistList, type);
+        const addList = list.filter(entry => entry.shouldAdd());
+        await this.syncList(type, addList, 'add');
+        // Refresh list to get episode/chapter counts of new completed items
+        if (addList.length) {
+            this.Log.info(`Refreshing MyAnimeList ${type} list...`);
+            list = await this.getEntriesList(anilistList, type);
+        }
+        const updateList = list.filter(entry => entry.shouldUpdate());
+        await this.syncList(type, updateList, 'edit');
+    }
+}
+exports.default = MAL;
 
 
 /***/ }),
@@ -639,8 +680,10 @@ exports.syncType = async (type, anilistList, malUsername, csrfToken) => {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Dom = __webpack_require__(4);
-exports.createMALEntry = (al, mal, csrfToken) => al.type === 'anime' ? new MALEntryAnime(al, mal, csrfToken) : new MALEntryManga(al, mal, csrfToken);
+const Dom_1 = __webpack_require__(4);
+exports.createMALEntry = (al, mal, csrfToken, domMethods) => al.type === 'anime' ?
+    new MALEntryAnime(al, mal, csrfToken, domMethods) :
+    new MALEntryManga(al, mal, csrfToken, domMethods);
 const MALStatus = {
     Current: 1,
     Completed: 2,
@@ -667,18 +710,6 @@ const getStatus = (status) => {
             throw new Error(`unknown status "${status}"`);
     }
 };
-const buildDateString = (date) => {
-    if (date.month === 0 && date.day === 0 && date.year === 0)
-        return null;
-    const dateSetting = Dom.getDateSetting();
-    const month = `${String(date.month).length < 2 ? '0' : ''}${date.month}`;
-    const day = `${String(date.day).length < 2 ? '0' : ''}${date.day}`;
-    const year = `${date.year ? String(date.year).slice(-2) : 0}`;
-    if (dateSetting === 'a') {
-        return `${month}-${day}-${year}`;
-    }
-    return `${day}-${month}-${year}`;
-};
 const createMALFormData = (malData) => {
     let formData = '';
     Object.keys(malData).forEach(key => {
@@ -687,11 +718,12 @@ const createMALFormData = (malData) => {
     return formData.replace(/&$/, '');
 };
 class BaseMALEntry {
-    constructor(al, mal, csrfToken = '') {
+    constructor(al, mal, csrfToken = '', dom = Dom_1.default) {
         this.alData = al;
         this.malData = mal;
         this.csrfToken = csrfToken;
         this._postData = this.createPostData();
+        this.Dom = dom;
     }
     createBaseMALPostItem() {
         return {
@@ -710,6 +742,18 @@ class BaseMALEntry {
             }
         };
     }
+    buildDateString(date) {
+        if (date.month === 0 && date.day === 0 && date.year === 0)
+            return null;
+        const dateSetting = this.Dom.getDateSetting();
+        const month = `${String(date.month).length < 2 ? '0' : ''}${date.month}`;
+        const day = `${String(date.day).length < 2 ? '0' : ''}${date.day}`;
+        const year = `${date.year ? String(date.year).slice(-2) : 0}`;
+        if (dateSetting === 'a') {
+            return `${month}-${day}-${year}`;
+        }
+        return `${day}-${month}-${year}`;
+    }
     shouldUpdate() {
         return Object.keys(this._postData).some(key => {
             switch (key) {
@@ -721,7 +765,7 @@ class BaseMALEntry {
                 case 'finish_date':
                     {
                         // @ts-ignore
-                        const dateString = buildDateString(this._postData[key]);
+                        const dateString = this.buildDateString(this._postData[key]);
                         if (dateString !== this.malData[`${key}_string`]) {
                             return true;
                         }
@@ -796,8 +840,8 @@ class BaseMALEntry {
 }
 exports.BaseMALEntry = BaseMALEntry;
 class MALEntryAnime extends BaseMALEntry {
-    constructor(al, mal, csrfToken) {
-        super(al, mal, csrfToken);
+    constructor(al, mal, csrfToken, dom = Dom_1.default) {
+        super(al, mal, csrfToken, dom);
     }
     createPostData() {
         const result = this.createBaseMALPostItem();
@@ -846,8 +890,8 @@ class MALEntryAnime extends BaseMALEntry {
 }
 exports.MALEntryAnime = MALEntryAnime;
 class MALEntryManga extends BaseMALEntry {
-    constructor(al, mal, csrfToken) {
-        super(al, mal, csrfToken);
+    constructor(al, mal, csrfToken, dom = Dom_1.default) {
+        super(al, mal, csrfToken, dom);
     }
     createPostData() {
         const result = this.createBaseMALPostItem();
