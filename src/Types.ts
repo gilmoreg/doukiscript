@@ -65,6 +65,7 @@ export interface BaseMALItem {
 export interface BaseMALLoadItem extends BaseMALItem {
     finish_date_string: string | null
     start_date_string: string | null
+    priority_string: string
 }
 
 export interface MALLoadAnime extends BaseMALLoadItem {

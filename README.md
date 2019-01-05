@@ -4,7 +4,13 @@
 Use this script at your own risk! The author assumes no responsibility for any damages of any kind. It is *strongly* recommended you test this out on a throwaway MAL account before attempting to sync your main account.
 
 ## WARNING
-Using this script will clear out certain advanced settings such as Storage, Priority, SNS, and Dicussion settings. Do not use this script if you care about those settings.
+Using this script will override certain advanced settings for MAL entries:
+1. **Storage** will be cleared
+2. **Rewatch/Re-read Value** will be cleared (not the number of rewatches, but your "rewatchability" setting from Low to Very High)
+3. **Ask to Discuss?** will be set to: *Don't ask to discuss*
+4. **Post to SNS** will be set to: *Follow default setting*
+
+**Do not use this script if you care about those settings.** See details under Notes.
 
 ## About
 So you're an Anilist user (perhaps you came over after MAL melted down) but you still want to keep your MAL page up to date for all your friends who still use it. Douki can sync your Anilist lists to MAL with the click of a button.
@@ -24,5 +30,6 @@ Unfortunately, given that MAL shut down its public API over security concerns, t
 - Custom lists will be imported into the main MAL list.
 - Private lists will be ignored.
 - Tags and notes will be ignored. Keeping these consistent across the two sites is too difficult for now. I am open to attempting this in the future, but no promises.
+- The reason certain advanced settings have to be overwritten is that this data must be supplied when editing an entry, but due to limitations with how MAL works there is no practical way for the script to know what you have those set to. In lieu of this,  defaults have been chosen. Feedback on the choices is welcome. "Storage" is the one which *might* be possible to implement, but it would be a huge effort and I doubt many people use this setting. Let me know if it is important to you.
 
 Please report issues [on the Anilist forum thread](https://anilist.co/forum/thread/2654). All suggestions, feedback, or bug reports are welcome.

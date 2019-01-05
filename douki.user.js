@@ -691,6 +691,11 @@ const MALStatus = {
     Dropped: 4,
     Planning: 6
 };
+const MALPriority = {
+    Low: 0,
+    Medium: 1,
+    High: 2
+};
 const getStatus = (status) => {
     // MAL status: 1/watching, 2/completed, 3/onhold, 4/dropped, 6/plantowatch
     // MAL handles REPEATING as a boolean, and keeps status as COMPLETE
@@ -859,11 +864,11 @@ class MALEntryAnime extends BaseMALEntry {
     formData() {
         const formData = {
             anime_id: this.malData.anime_id,
-            aeps: this._postData.anime_num_episodes || 0,
+            aeps: this.malData.anime_num_episodes || 0,
             astatus: this.malData.anime_airing_status,
             'add_anime[status]': this._postData.status,
             'add_anime[num_watched_episodes]': this._postData.num_watched_episodes || 0,
-            'add_anime[score]': this._postData.score,
+            'add_anime[score]': this._postData.score || '',
             'add_anime[start_date][month]': this._postData.start_date && this._postData.start_date.month || '',
             'add_anime[start_date][day]': this._postData.start_date && this._postData.start_date.day || '',
             'add_anime[start_date][year]': this._postData.start_date && this._postData.start_date.year || '',
@@ -871,13 +876,13 @@ class MALEntryAnime extends BaseMALEntry {
             'add_anime[finish_date][day]': this._postData.finish_date && this._postData.finish_date.day || '',
             'add_anime[finish_date][year]': this._postData.finish_date && this._postData.finish_date.year || '',
             'add_anime[tags]': this.malData.tags || '',
-            'add_anime[priority]': 0,
+            'add_anime[priority]': MALPriority[this.malData.priority_string] || 0,
             'add_anime[storage_type]': '',
             'add_anime[storage_value]': 0,
             'add_anime[num_watched_times]': this._postData.num_watched_times || 0,
             'add_anime[rewatch_value]': '',
             'add_anime[comments]': '',
-            'add_anime[is_asked_to_discuss]': 0,
+            'add_anime[is_asked_to_discuss]': 1,
             'add_anime[sns_post_type]': 0,
             submitIt: 0,
             csrf_token: this.csrfToken,
@@ -931,7 +936,7 @@ class MALEntryManga extends BaseMALEntry {
             'add_manga[num_read_times]': this._postData.num_read_times || 0,
             'add_manga[reread_value]': '',
             'add_manga[comments]': '',
-            'add_manga[is_asked_to_discuss]': 0,
+            'add_manga[is_asked_to_discuss]': 1,
             'add_manga[sns_post_type]': 0,
             csrf_token: this.csrfToken,
             submitIt: 0
