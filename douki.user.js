@@ -930,7 +930,7 @@ class MALEntryManga extends BaseMALEntry {
             'add_manga[finish_date][day]': this._postData.finish_date && this._postData.finish_date.day || '',
             'add_manga[finish_date][year]': this._postData.finish_date && this._postData.finish_date.year || '',
             'add_manga[tags]': this.malData.tags || '',
-            'add_manga[priority]': 0,
+            'add_manga[priority]': MALPriority[this.malData.priority_string] || 0,
             'add_manga[storage_type]': '',
             'add_manga[num_retail_volumes]': this.malData.manga_num_volumes || 0,
             'add_manga[num_read_times]': this._postData.num_read_times || 0,
