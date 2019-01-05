@@ -593,8 +593,9 @@ class MAL {
         const malHashMap = await this.getMALHashMap(type);
         return anilistList.map(entry => MALEntry_1.createMALEntry(entry, malHashMap[entry.id], this.csrfToken, this.Dom));
     }
-    malEdit(data) {
+    async malEdit(data) {
         const { type, id } = data;
+        const formData = await data.formData();
         return fetch(`https://myanimelist.net/ownlist/${type}/${id}/edit?hideLayout`, {
             credentials: 'include',
             headers: {
@@ -606,7 +607,7 @@ class MAL {
             },
             referrer: `https://myanimelist.net/ownlist/${type}/${id}/edit?hideLayout`,
             referrerPolicy: 'no-referrer-when-downgrade',
-            body: data.formData(),
+            body: formData,
             method: 'POST',
             mode: 'cors'
         }).then((res) => {
@@ -681,6 +682,7 @@ exports.default = MAL;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const Dom_1 = __webpack_require__(4);
+const MALForm_1 = __webpack_require__(8);
 exports.createMALEntry = (al, mal, csrfToken, domMethods) => al.type === 'anime' ?
     new MALEntryAnime(al, mal, csrfToken, domMethods) :
     new MALEntryManga(al, mal, csrfToken, domMethods);
@@ -690,11 +692,6 @@ const MALStatus = {
     Paused: 3,
     Dropped: 4,
     Planning: 6
-};
-const MALPriority = {
-    Low: 0,
-    Medium: 1,
-    High: 2
 };
 const getStatus = (status) => {
     // MAL status: 1/watching, 2/completed, 3/onhold, 4/dropped, 6/plantowatch
@@ -861,7 +858,9 @@ class MALEntryAnime extends BaseMALEntry {
             this.alData.progress || 0;
         return result;
     }
-    formData() {
+    async formData() {
+        const malFormData = new MALForm_1.MALForm(this.alData.type, this.alData.id);
+        await malFormData.get();
         const formData = {
             anime_id: this.malData.anime_id,
             aeps: this.malData.anime_num_episodes || 0,
@@ -876,14 +875,14 @@ class MALEntryAnime extends BaseMALEntry {
             'add_anime[finish_date][day]': this._postData.finish_date && this._postData.finish_date.day || '',
             'add_anime[finish_date][year]': this._postData.finish_date && this._postData.finish_date.year || '',
             'add_anime[tags]': this.malData.tags || '',
-            'add_anime[priority]': MALPriority[this.malData.priority_string] || 0,
-            'add_anime[storage_type]': '',
-            'add_anime[storage_value]': 0,
+            'add_anime[priority]': malFormData.priority,
+            'add_anime[storage_type]': malFormData.storageType,
+            'add_anime[storage_value]': malFormData.storageValue,
             'add_anime[num_watched_times]': this._postData.num_watched_times || 0,
-            'add_anime[rewatch_value]': '',
-            'add_anime[comments]': '',
-            'add_anime[is_asked_to_discuss]': 1,
-            'add_anime[sns_post_type]': 0,
+            'add_anime[rewatch_value]': malFormData.rewatchValue,
+            'add_anime[comments]': malFormData.comments,
+            'add_anime[is_asked_to_discuss]': malFormData.discussionSetting,
+            'add_anime[sns_post_type]': malFormData.SNSSetting,
             submitIt: 0,
             csrf_token: this.csrfToken,
         };
@@ -914,7 +913,9 @@ class MALEntryManga extends BaseMALEntry {
             this.alData.progressVolumes || 0;
         return result;
     }
-    formData() {
+    async formData() {
+        const malFormData = new MALForm_1.MALForm(this.alData.type, this.alData.id);
+        await malFormData.get();
         const formData = {
             entry_id: 0,
             manga_id: this.malData.manga_id,
@@ -930,14 +931,14 @@ class MALEntryManga extends BaseMALEntry {
             'add_manga[finish_date][day]': this._postData.finish_date && this._postData.finish_date.day || '',
             'add_manga[finish_date][year]': this._postData.finish_date && this._postData.finish_date.year || '',
             'add_manga[tags]': this.malData.tags || '',
-            'add_manga[priority]': MALPriority[this.malData.priority_string] || 0,
-            'add_manga[storage_type]': '',
+            'add_manga[priority]': malFormData.priority,
+            'add_manga[storage_type]': malFormData.storageType,
             'add_manga[num_retail_volumes]': this.malData.manga_num_volumes || 0,
             'add_manga[num_read_times]': this._postData.num_read_times || 0,
-            'add_manga[reread_value]': '',
-            'add_manga[comments]': '',
-            'add_manga[is_asked_to_discuss]': 1,
-            'add_manga[sns_post_type]': 0,
+            'add_manga[reread_value]': malFormData.rereadValue,
+            'add_manga[comments]': malFormData.comments,
+            'add_manga[is_asked_to_discuss]': malFormData.discussionSetting,
+            'add_manga[sns_post_type]': malFormData.SNSSetting,
             csrf_token: this.csrfToken,
             submitIt: 0
         };
@@ -948,6 +949,101 @@ class MALEntryManga extends BaseMALEntry {
     }
 }
 exports.MALEntryManga = MALEntryManga;
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const util_1 = __webpack_require__(3);
+class MALForm {
+    constructor(type, id) {
+        this.document = null;
+        this.type = type;
+        this.id = id;
+    }
+    fetch() {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.onload = function () {
+                return resolve(this.responseXML ? this.responseXML : null);
+            };
+            xhr.onerror = function (e) {
+                reject(e);
+            };
+            xhr.open('GET', `https://myanimelist.net/ownlist/${this.type}/${this.id}/edit`);
+            xhr.responseType = 'document';
+            xhr.send();
+        });
+    }
+    getElement(id) {
+        if (!this.document)
+            throw new Error('Document not loaded');
+        return this.document.querySelector(`#add_${this.type}_${id}`);
+    }
+    async get() {
+        await util_1.sleep(500);
+        const document = await this.fetch();
+        if (document) {
+            this.document = document;
+        }
+        else {
+            throw new Error('Unable to fetch form data');
+        }
+    }
+    get priority() {
+        const el = this.getElement('priority');
+        if (!el)
+            throw new Error('Unable to get priority');
+        return el.value;
+    }
+    get storageType() {
+        const el = this.getElement('storage_type');
+        if (!el)
+            throw new Error('Unable to get storage type');
+        return el.value;
+    }
+    get storageValue() {
+        const el = this.getElement('storage_value');
+        if (!el)
+            return '0';
+        return el.value;
+    }
+    get rewatchValue() {
+        const el = this.getElement('rewatch_value');
+        if (!el)
+            throw new Error('Unable to get rewatch value');
+        return el.value;
+    }
+    get rereadValue() {
+        const el = this.getElement('reread_value');
+        if (!el)
+            throw new Error('Unable to get reread value');
+        return el.value;
+    }
+    get comments() {
+        const el = this.getElement('comments');
+        if (!el)
+            throw new Error('Unable to get comments');
+        return el.value;
+    }
+    get discussionSetting() {
+        const el = this.getElement('is_asked_to_discuss');
+        if (!el)
+            throw new Error('Unable to get discussion value');
+        return el.value;
+    }
+    get SNSSetting() {
+        const el = this.getElement('sns_post_type');
+        if (!el)
+            throw new Error('Unable to get SNS setting');
+        return el.value;
+    }
+}
+exports.MALForm = MALForm;
 
 
 /***/ })

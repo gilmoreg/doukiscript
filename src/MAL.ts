@@ -48,8 +48,9 @@ export default class MAL {
         return anilistList.map(entry => createMALEntry(entry, malHashMap[entry.id], this.csrfToken, this.Dom));
     }
 
-    private malEdit(data: MALEntry) {
+    private async malEdit(data: MALEntry) {
         const { type, id } = data;
+        const formData = await data.formData();
         return fetch(`https://myanimelist.net/ownlist/${type}/${id}/edit?hideLayout`,
             {
                 credentials: 'include',
@@ -62,14 +63,14 @@ export default class MAL {
                 },
                 referrer: `https://myanimelist.net/ownlist/${type}/${id}/edit?hideLayout`,
                 referrerPolicy: 'no-referrer-when-downgrade',
-                body: data.formData(),
+                body: formData,
                 method: 'POST',
                 mode: 'cors'
             }).then((res) => {
                 if (res.status === 200) return res;
                 throw new Error(`Error updating ${type} id ${id}`);
             }).then((res) => res.text())
-            .then((text) => {
+            .then((text: string) => {
                 if (text.match(/.+Successfully updated entry.+/)) return;
                 throw new Error(`Error updating ${type} id ${id}`);
             });
