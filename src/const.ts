@@ -1,0 +1,13 @@
+export const DOUKI_FORM_ID = 'douki-form';
+export const DOUKI_ANILIST_IMPORT_ID = 'douki-anilist-import';
+export const DATE_SETTING_ID = 'douki-date_format';
+export const CONTENT_ID = 'content';
+export const DOUKI_IMPORT_BUTTON_ID = 'douki-import'
+export const SYNC_LOG_ID = 'douki-sync-log';
+export const ERROR_LOG_ID = 'douki-error-log';
+export const ERROR_LOG_TOGGLE_ID = 'douki-error-log-toggle';
+export const ERROR_LOG_DIV_ID = 'douki-error-log-div';
+export const ANILIST_USERNAME_ID = 'douki-anilist-username';
+export const SETTINGS_KEY = 'douki-settings';
+export const DATE_SETTINGS_KEY = 'douki-settings-date';
+export const DROPDOWN_ITEM_ID = 'douki-sync';

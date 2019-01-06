@@ -12,8 +12,9 @@ Unfortunately, given that MAL shut down its public API over security concerns, t
 1. Install a userscript manager ([choose one from this list](https://greasyfork.org/en))
 2. Install the script [here](https://greasyfork.org/en/scripts/373467-douki)
 3. Visit [the import page on Myanimelist.net](https://myanimelist.net/import.php). *You need to be logged in to MAL.*
-4. Alternatively, a link to the import page is added to the List dropdown at the top of the main page
-5. Fill in your Anilist username and hit `Import`
+4. Ensure the date setting matches your setting on MAL (US or Euro)
+5. Alternatively, a link to the import page is added to the List dropdown at the top of the main page
+6. Fill in your Anilist username and hit `Import`
 
 ## Notes
 - The most common source of errors are titles that are not yet approved on Myanimelist. These cannot be added even manually. **Before reporting errors, check to see if you can add an item manually. If you can't add it, neither can Douki.**
@@ -21,5 +22,6 @@ Unfortunately, given that MAL shut down its public API over security concerns, t
 - Custom lists will be imported into the main MAL list.
 - Private lists will be ignored.
 - Tags and notes will be ignored. Keeping these consistent across the two sites is too difficult for now. I am open to attempting this in the future, but no promises.
+- Due to a quirk with MAL's site, changing the number of times you've rewatched a show or reread a manga alone will not trigger an update. You need to also change status, episode/chapter count, or score for the script to pick up on a change and update the entry.
 
 Please report issues [on the Anilist forum thread](https://anilist.co/forum/thread/2654). All suggestions, feedback, or bug reports are welcome.

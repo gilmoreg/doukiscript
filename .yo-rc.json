@@ -1,0 +1,7 @@
+{
+  "generator-userscript": {
+    "promptValues": {
+      "namespace": "http://gilmoreg.com"
+    }
+  }
+}
