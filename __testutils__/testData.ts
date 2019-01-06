@@ -22,6 +22,8 @@ const malAnime = {
 const malManga = {
     ...malItem,
     manga_id: 2,
+    manga_num_chapters: 12,
+    manga_num_volumes: 1,
     num_read_chapters: 12,
     num_read_volumes: 1
 } as Types.MALLoadManga;

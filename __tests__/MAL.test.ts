@@ -1,7 +1,5 @@
 import MAL from '../src/MAL';
-import FakeDomMethods from '../__mocks__/Dom';
 import FakeLog from '../__mocks__/Log';
-// import FakeMALForm from '../__mocks__/MALForm';
 import * as fetchMock from 'fetch-mock';
 import * as fakes from '../__testutils__/testData';
 import { MALLoadItem } from '../src/Types';
@@ -44,11 +42,25 @@ describe('syncType()', () => {
             .once(/.+load.json.+/, [])
             .once(/.+add.json/, {})
             .once(/.+load.json.+/, [malManga])
-            .once(/.+load.json.+/, [])
-            .once(/.+edit.+/, {});
+            .once(/.+load.json.+/, []);
         const mal = new MAL('test', 'csrfToken', new FakeLog());
         await mal.syncType('manga', [alManga]);
         const [url] = fetchMock.calls()[1];
         expect(url).toEqual('https://myanimelist.net/ownlist/manga/add.json');
+    });
+
+    it('should sync a manga when volume count is different', async () => {
+        const malManga = fakes.createFakeMALManga({ status: 1, manga_num_volumes: 2, num_read_volumes: 1 });
+        const alManga = fakes.createFakeAnilistManga({ status: 'CURRENT', progressVolumes: 2 });
+        fetchMock
+            .once(/.+load.json.+/, [malManga])
+            .once(/.+load.json.+/, [])
+            .once(/.+edit.+/, ' Successfully updated entry ')
+            .once(/.+load.json.+/, [fakes.createFakeMALManga({ num_read_volumes: 2 })])
+            .once(/.+load.json.+/, []);
+        const mal = new MAL('test', 'csrfToken', new FakeLog());
+        await mal.syncType('manga', [alManga]);
+        const [url] = fetchMock.calls()[2];
+        expect(url).toEqual('https://myanimelist.net/ownlist/manga/2/edit?hideLayout');
     });
 });
