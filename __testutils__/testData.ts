@@ -1,8 +1,5 @@
 import * as Types from '../src/Types';
 import { IDomMethods } from '../src/Dom';
-import { DIContainer } from '../src/DIContainer';
-import FakeLog from '../__mocks__/Log';
-import { FakeMALForm } from '../__mocks__/MALForm';
 
 const createDate = (year = 0, month = 0, day = 0) => ({ year, month, day });
 
@@ -75,5 +72,3 @@ export const createFakeDomMethods = (dateSetting = 'a'): IDomMethods => ({
     getMALUsername: () => 'malUsername',
     getAnilistUsername: () => 'anilistUsername'
 });
-
-export const defaultMocks = () => new DIContainer(undefined, () => new FakeMALForm(), createFakeDomMethods(), new FakeLog());

@@ -168,3 +168,9 @@ export interface MALMangaFormData extends MALFormData {
     'add_manga[is_asked_to_discuss]': number
     'add_manga[sns_post_type]': number
 }
+
+export default {
+    IDocRepository: Symbol('IDocRepository'),
+    IDomMethods: Symbol('IDomMethods'),
+    ILog: Symbol('ILog')
+}

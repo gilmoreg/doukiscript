@@ -257,18 +257,6 @@ exports.getOperationDisplayName = (operation) => {
             throw new Error('Unknown operation type');
     }
 };
-exports.fetchDocument = (type, id) => new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.onload = function () {
-        return resolve(this.responseXML ? this.responseXML : null);
-    };
-    xhr.onerror = function (e) {
-        reject(e);
-    };
-    xhr.open('GET', `https://myanimelist.net/ownlist/${type}/${id}/edit`);
-    xhr.responseType = 'document';
-    xhr.send();
-});
 
 
 /***/ }),
@@ -568,13 +556,12 @@ exports.getAnilistList = (username) => fetchList(username)
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_1 = __webpack_require__(3);
 const MALEntry_1 = __webpack_require__(7);
-const DIContainer_1 = __webpack_require__(9);
+const Log_1 = __webpack_require__(1);
 class MAL {
-    constructor(username, csrfToken, deps = DIContainer_1.diContainer) {
+    constructor(username, csrfToken, log = Log_1.default) {
         this.username = username;
         this.csrfToken = csrfToken;
-        this.deps = deps;
-        this.Log = deps.log;
+        this.Log = log;
     }
     createMALHashMap(malList, type) {
         const hashMap = {};
@@ -602,7 +589,7 @@ class MAL {
     }
     async getEntriesList(anilistList, type) {
         const malHashMap = await this.getMALHashMap(type);
-        return anilistList.map(entry => MALEntry_1.createMALEntry(entry, malHashMap[entry.id], this.csrfToken, this.deps));
+        return anilistList.map(entry => MALEntry_1.createMALEntry(entry, malHashMap[entry.id], this.csrfToken));
     }
     async malEdit(data) {
         const { type, id } = data;
@@ -693,10 +680,10 @@ exports.default = MAL;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const MALForm_1 = __webpack_require__(8);
-const DIContainer_1 = __webpack_require__(9);
-exports.createMALEntry = (al, mal, csrfToken, deps) => al.type === 'anime' ?
-    new MALEntryAnime(al, mal, csrfToken, deps) :
-    new MALEntryManga(al, mal, csrfToken, deps);
+const Dom_1 = __webpack_require__(4);
+exports.createMALEntry = (al, mal, csrfToken) => al.type === 'anime' ?
+    new MALEntryAnime(al, mal, csrfToken) :
+    new MALEntryManga(al, mal, csrfToken);
 const MALStatus = {
     Current: 1,
     Completed: 2,
@@ -731,12 +718,12 @@ const createMALFormData = (malData) => {
     return formData.replace(/&$/, '');
 };
 class BaseMALEntry {
-    constructor(al, mal, csrfToken = '', deps = DIContainer_1.diContainer) {
+    constructor(al, mal, csrfToken = '', dom = Dom_1.default) {
         this.alData = al;
         this.malData = mal;
         this.csrfToken = csrfToken;
         this._postData = this.createPostData();
-        this.deps = deps;
+        this.dom = dom;
     }
     createBaseMALPostItem() {
         return {
@@ -758,7 +745,7 @@ class BaseMALEntry {
     buildDateString(date) {
         if (date.month === 0 && date.day === 0 && date.year === 0)
             return null;
-        const dateSetting = this.deps.dom.getDateSetting();
+        const dateSetting = this.dom.getDateSetting();
         const month = `${String(date.month).length < 2 ? '0' : ''}${date.month}`;
         const day = `${String(date.day).length < 2 ? '0' : ''}${date.day}`;
         const year = `${date.year ? String(date.year).slice(-2) : 0}`;
@@ -853,8 +840,8 @@ class BaseMALEntry {
 }
 exports.BaseMALEntry = BaseMALEntry;
 class MALEntryAnime extends BaseMALEntry {
-    constructor(al, mal, csrfToken = '', deps = DIContainer_1.diContainer) {
-        super(al, mal, csrfToken, deps);
+    constructor(al, mal, csrfToken = '', dom = Dom_1.default) {
+        super(al, mal, csrfToken, dom);
     }
     createPostData() {
         const result = this.createBaseMALPostItem();
@@ -865,12 +852,11 @@ class MALEntryAnime extends BaseMALEntry {
         // For new items it will not be present; however the list will refresh after add and
         // it should be available then
         result.num_watched_episodes = this.malData && this.malData.anime_num_episodes ?
-            Math.min(this.alData.progress, this.malData.anime_num_episodes) :
-            this.alData.progress || 0;
+            Math.min(this.alData.progress, this.malData.anime_num_episodes) : 0;
         return result;
     }
     async formData() {
-        const malFormData = this.deps.malFormFactory(this.alData.type, this.alData.id);
+        const malFormData = new MALForm_1.MALForm(this.alData.type, this.alData.id);
         await malFormData.get();
         const formData = {
             anime_id: this.malData.anime_id,
@@ -905,8 +891,8 @@ class MALEntryAnime extends BaseMALEntry {
 }
 exports.MALEntryAnime = MALEntryAnime;
 class MALEntryManga extends BaseMALEntry {
-    constructor(al, mal, csrfToken = '', deps = DIContainer_1.diContainer) {
-        super(al, mal, csrfToken, deps);
+    constructor(al, mal, csrfToken = '', dom = Dom_1.default) {
+        super(al, mal, csrfToken, dom);
     }
     createPostData() {
         const result = this.createBaseMALPostItem();
@@ -917,11 +903,9 @@ class MALEntryManga extends BaseMALEntry {
         // For new items they will not be present; however the list will refresh after add and
         // they should be available then
         result.num_read_chapters = this.malData && this.malData.manga_num_chapters ?
-            Math.min(this.alData.progress, this.malData.manga_num_chapters) :
-            this.alData.progress || 0;
+            Math.min(this.alData.progress, this.malData.manga_num_chapters) : 0;
         result.num_read_volumes = this.malData && this.malData.manga_num_volumes ?
-            Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes) :
-            this.alData.progressVolumes || 0;
+            Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes) : 0;
         return result;
     }
     async formData() {
@@ -970,13 +954,25 @@ exports.MALEntryManga = MALEntryManga;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_1 = __webpack_require__(3);
-const DIContainer_1 = __webpack_require__(9);
 class MALForm {
-    constructor(type, id, deps = DIContainer_1.diContainer) {
+    constructor(type, id) {
         this.document = null;
         this.type = type;
         this.id = id;
-        this.deps = deps;
+    }
+    fetchDocument(type, id) {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.onload = function () {
+                return resolve(this.responseXML ? this.responseXML : null);
+            };
+            xhr.onerror = function (e) {
+                reject(e);
+            };
+            xhr.open('GET', `https://myanimelist.net/ownlist/${type}/${id}/edit`);
+            xhr.responseType = 'document';
+            xhr.send();
+        });
     }
     getElement(id) {
         if (!this.document)
@@ -985,7 +981,7 @@ class MALForm {
     }
     async get() {
         await util_1.sleep(500);
-        const document = await this.deps.fetchDocument(this.type, this.id);
+        const document = await this.fetchDocument(this.type, this.id);
         if (document) {
             this.document = document;
         }
@@ -1049,30 +1045,6 @@ class MALForm {
     }
 }
 exports.MALForm = MALForm;
-exports.createMALForm = (type, id) => new MALForm(type, id);
-
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const util_1 = __webpack_require__(3);
-const Dom_1 = __webpack_require__(4);
-const MALForm_1 = __webpack_require__(8);
-const Log_1 = __webpack_require__(1);
-class DIContainer {
-    constructor(fetchDocumentFn = util_1.fetchDocument, malFormFactory = MALForm_1.createMALForm, dom = Dom_1.default, log = Log_1.default) {
-        this.fetchDocument = fetchDocumentFn;
-        this.malFormFactory = malFormFactory;
-        this.dom = dom;
-        this.log = log;
-    }
-}
-exports.DIContainer = DIContainer;
-exports.diContainer = new DIContainer();
 
 
 /***/ })

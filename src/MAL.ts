@@ -1,20 +1,17 @@
 import { sleep } from './util';
 import { MALHashMap, FormattedEntry, MALLoadItem } from './Types';
 import { MALEntry, createMALEntry } from './MALEntry';
-import { IDIContainer, diContainer } from './DIContainer';
-import { ILog } from './Log';
+import Log, { ILog } from './Log';
 
 export default class MAL {
     username: string
     csrfToken: string
-    deps: IDIContainer
     Log: ILog
 
-    constructor(username: string, csrfToken: string, deps: IDIContainer = diContainer) {
+    constructor(username: string, csrfToken: string, log: ILog = Log) {
         this.username = username;
         this.csrfToken = csrfToken;
-        this.deps = deps;
-        this.Log = deps.log;
+        this.Log = log;
     }
 
     private createMALHashMap(malList: Array<MALLoadItem>, type: string): MALHashMap {
@@ -45,7 +42,7 @@ export default class MAL {
 
     private async getEntriesList(anilistList: Array<FormattedEntry>, type: string): Promise<Array<MALEntry>> {
         const malHashMap = await this.getMALHashMap(type);
-        return anilistList.map(entry => createMALEntry(entry, malHashMap[entry.id], this.csrfToken, this.deps));
+        return anilistList.map(entry => createMALEntry(entry, malHashMap[entry.id], this.csrfToken));
     }
 
     private async malEdit(data: MALEntry) {

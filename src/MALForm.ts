@@ -1,5 +1,4 @@
 import { sleep } from "./util";
-import { IDIContainer, diContainer } from "./DIContainer";
 
 export interface IMALForm {
     get(): Promise<void>
@@ -18,12 +17,25 @@ export class MALForm implements IMALForm {
     type: string
     id: number
     document: Document | null = null
-    deps: IDIContainer
 
-    constructor(type: string, id: number, deps: IDIContainer = diContainer) {
+    constructor(type: string, id: number) {
         this.type = type;
         this.id = id;
-        this.deps = deps;
+    }
+
+    private fetchDocument(type: string, id: number): Promise<Document | null> {
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.onload = function () {
+                return resolve(this.responseXML ? this.responseXML : null);
+            }
+            xhr.onerror = function (e) {
+                reject(e);
+            }
+            xhr.open('GET', `https://myanimelist.net/ownlist/${type}/${id}/edit`);
+            xhr.responseType = 'document';
+            xhr.send();
+        });
     }
 
     private getElement(id: string): HTMLSelectElement | null {
@@ -33,7 +45,7 @@ export class MALForm implements IMALForm {
 
     async get() {
         await sleep(500);
-        const document = await this.deps.fetchDocument(this.type, this.id);
+        const document = await this.fetchDocument(this.type, this.id);
         if (document) {
             this.document = document;
         } else {
@@ -95,5 +107,3 @@ export class MALForm implements IMALForm {
         return el.value;
     }
 }
-
-export const createMALForm = (type: string, id: number) => new MALForm(type, id);

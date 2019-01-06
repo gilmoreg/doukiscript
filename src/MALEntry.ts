@@ -1,12 +1,11 @@
-import Dom, { IDomMethods } from './Dom';
 import * as T from "./Types";
-import { IMALForm, MALForm } from './MALForm';
-import { diContainer, IDIContainer } from './DIContainer';
+import { MALForm } from './MALForm';
+import Dom, { IDomMethods } from "./Dom";
 
-export const createMALEntry = (al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string, deps: IDIContainer) =>
+export const createMALEntry = (al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string) =>
     al.type === 'anime' ?
-        new MALEntryAnime(al, mal, csrfToken, deps) :
-        new MALEntryManga(al, mal, csrfToken, deps);
+        new MALEntryAnime(al, mal, csrfToken) :
+        new MALEntryManga(al, mal, csrfToken);
 
 type StringNumMap = { [key: string]: number }
 const MALStatus: StringNumMap = {
@@ -60,19 +59,19 @@ export class BaseMALEntry implements MALEntry {
     malData: T.MALLoadItem
     _postData: T.MALPostItem
     csrfToken: string
-    deps: IDIContainer
+    dom: IDomMethods
 
     constructor(
         al: T.FormattedEntry,
         mal: T.MALLoadItem,
         csrfToken: string = '',
-        deps: IDIContainer = diContainer
+        dom: IDomMethods = Dom
     ) {
         this.alData = al;
         this.malData = mal;
         this.csrfToken = csrfToken;
         this._postData = this.createPostData();
-        this.deps = deps;
+        this.dom = dom;
     }
 
     protected createBaseMALPostItem(): T.MALPostItem {
@@ -95,7 +94,7 @@ export class BaseMALEntry implements MALEntry {
 
     buildDateString(date: T.MediaDate): string | null {
         if (date.month === 0 && date.day === 0 && date.year === 0) return null;
-        const dateSetting = this.deps.dom.getDateSetting();
+        const dateSetting = this.dom.getDateSetting();
         const month = `${String(date.month).length < 2 ? '0' : ''}${date.month}`;
         const day = `${String(date.day).length < 2 ? '0' : ''}${date.day}`;
         const year = `${date.year ? String(date.year).slice(-2) : 0}`;
@@ -196,9 +195,9 @@ export class MALEntryAnime extends BaseMALEntry {
         al: T.FormattedEntry,
         mal: T.MALLoadItem,
         csrfToken: string = '',
-        deps: IDIContainer = diContainer
+        dom: IDomMethods = Dom
     ) {
-        super(al, mal, csrfToken, deps);
+        super(al, mal, csrfToken, dom);
     }
 
     createPostData(): T.MALPostItem {
@@ -211,14 +210,13 @@ export class MALEntryAnime extends BaseMALEntry {
         // For new items it will not be present; however the list will refresh after add and
         // it should be available then
         result.num_watched_episodes = this.malData && this.malData.anime_num_episodes ?
-            Math.min(this.alData.progress, this.malData.anime_num_episodes) :
-            this.alData.progress || 0;
+            Math.min(this.alData.progress, this.malData.anime_num_episodes) : 0;
 
         return result;
     }
 
     async formData(): Promise<string> {
-        const malFormData = this.deps.malFormFactory(this.alData.type, this.alData.id);
+        const malFormData = new MALForm(this.alData.type, this.alData.id);
         await malFormData.get();
         const formData = {
             anime_id: this.malData.anime_id,
@@ -257,9 +255,9 @@ export class MALEntryManga extends BaseMALEntry {
         al: T.FormattedEntry,
         mal: T.MALLoadItem,
         csrfToken: string = '',
-        deps: IDIContainer = diContainer
+        dom: IDomMethods = Dom
     ) {
-        super(al, mal, csrfToken, deps);
+        super(al, mal, csrfToken, dom);
     }
 
     createPostData(): T.MALPostItem {
@@ -272,12 +270,10 @@ export class MALEntryManga extends BaseMALEntry {
         // For new items they will not be present; however the list will refresh after add and
         // they should be available then
         result.num_read_chapters = this.malData && this.malData.manga_num_chapters ?
-            Math.min(this.alData.progress, this.malData.manga_num_chapters) :
-            this.alData.progress || 0;
+            Math.min(this.alData.progress, this.malData.manga_num_chapters) : 0;
 
         result.num_read_volumes = this.malData && this.malData.manga_num_volumes ?
-            Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes) :
-            this.alData.progressVolumes || 0;
+            Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes) : 0;
 
         return result;
     }

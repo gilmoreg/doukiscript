@@ -54,5 +54,6 @@
     "setupFiles": [
       "./__testutils__/setupJest.ts"
     ]
-  }
+  },
+  "dependencies": {}
 }
