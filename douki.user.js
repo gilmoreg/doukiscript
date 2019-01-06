@@ -123,7 +123,7 @@ const sync = async (e) => {
         return;
     }
     Log_1.default.info(`Fetched Anilist data.`);
-    const mal = new MAL_1.default(malUsername, csrfToken, Dom_1.default, Log_1.default);
+    const mal = new MAL_1.default(malUsername, csrfToken);
     await mal.syncType('anime', anilistList.anime);
     await mal.syncType('manga', anilistList.manga);
     Log_1.default.info('Import complete.');
@@ -257,6 +257,18 @@ exports.getOperationDisplayName = (operation) => {
             throw new Error('Unknown operation type');
     }
 };
+exports.fetchDocument = (type, id) => new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.onload = function () {
+        return resolve(this.responseXML ? this.responseXML : null);
+    };
+    xhr.onerror = function (e) {
+        reject(e);
+    };
+    xhr.open('GET', `https://myanimelist.net/ownlist/${type}/${id}/edit`);
+    xhr.responseType = 'document';
+    xhr.send();
+});
 
 
 /***/ }),
@@ -555,15 +567,14 @@ exports.getAnilistList = (username) => fetchList(username)
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_1 = __webpack_require__(3);
-const Log_1 = __webpack_require__(1);
 const MALEntry_1 = __webpack_require__(7);
-const Dom_1 = __webpack_require__(4);
+const DIContainer_1 = __webpack_require__(9);
 class MAL {
-    constructor(username, csrfToken, dom = Dom_1.default, log = Log_1.default) {
+    constructor(username, csrfToken, deps = DIContainer_1.diContainer) {
         this.username = username;
         this.csrfToken = csrfToken;
-        this.Dom = dom;
-        this.Log = log;
+        this.deps = deps;
+        this.Log = deps.log;
     }
     createMALHashMap(malList, type) {
         const hashMap = {};
@@ -591,7 +602,7 @@ class MAL {
     }
     async getEntriesList(anilistList, type) {
         const malHashMap = await this.getMALHashMap(type);
-        return anilistList.map(entry => MALEntry_1.createMALEntry(entry, malHashMap[entry.id], this.csrfToken, this.Dom));
+        return anilistList.map(entry => MALEntry_1.createMALEntry(entry, malHashMap[entry.id], this.csrfToken, this.deps));
     }
     async malEdit(data) {
         const { type, id } = data;
@@ -681,11 +692,11 @@ exports.default = MAL;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const Dom_1 = __webpack_require__(4);
 const MALForm_1 = __webpack_require__(8);
-exports.createMALEntry = (al, mal, csrfToken, domMethods) => al.type === 'anime' ?
-    new MALEntryAnime(al, mal, csrfToken, domMethods) :
-    new MALEntryManga(al, mal, csrfToken, domMethods);
+const DIContainer_1 = __webpack_require__(9);
+exports.createMALEntry = (al, mal, csrfToken, deps) => al.type === 'anime' ?
+    new MALEntryAnime(al, mal, csrfToken, deps) :
+    new MALEntryManga(al, mal, csrfToken, deps);
 const MALStatus = {
     Current: 1,
     Completed: 2,
@@ -720,12 +731,12 @@ const createMALFormData = (malData) => {
     return formData.replace(/&$/, '');
 };
 class BaseMALEntry {
-    constructor(al, mal, csrfToken = '', dom = Dom_1.default) {
+    constructor(al, mal, csrfToken = '', deps = DIContainer_1.diContainer) {
         this.alData = al;
         this.malData = mal;
         this.csrfToken = csrfToken;
         this._postData = this.createPostData();
-        this.Dom = dom;
+        this.deps = deps;
     }
     createBaseMALPostItem() {
         return {
@@ -747,7 +758,7 @@ class BaseMALEntry {
     buildDateString(date) {
         if (date.month === 0 && date.day === 0 && date.year === 0)
             return null;
-        const dateSetting = this.Dom.getDateSetting();
+        const dateSetting = this.deps.dom.getDateSetting();
         const month = `${String(date.month).length < 2 ? '0' : ''}${date.month}`;
         const day = `${String(date.day).length < 2 ? '0' : ''}${date.day}`;
         const year = `${date.year ? String(date.year).slice(-2) : 0}`;
@@ -842,8 +853,8 @@ class BaseMALEntry {
 }
 exports.BaseMALEntry = BaseMALEntry;
 class MALEntryAnime extends BaseMALEntry {
-    constructor(al, mal, csrfToken, dom = Dom_1.default) {
-        super(al, mal, csrfToken, dom);
+    constructor(al, mal, csrfToken = '', deps = DIContainer_1.diContainer) {
+        super(al, mal, csrfToken, deps);
     }
     createPostData() {
         const result = this.createBaseMALPostItem();
@@ -859,7 +870,7 @@ class MALEntryAnime extends BaseMALEntry {
         return result;
     }
     async formData() {
-        const malFormData = new MALForm_1.MALForm(this.alData.type, this.alData.id);
+        const malFormData = this.deps.malFormFactory(this.alData.type, this.alData.id);
         await malFormData.get();
         const formData = {
             anime_id: this.malData.anime_id,
@@ -894,8 +905,8 @@ class MALEntryAnime extends BaseMALEntry {
 }
 exports.MALEntryAnime = MALEntryAnime;
 class MALEntryManga extends BaseMALEntry {
-    constructor(al, mal, csrfToken, dom = Dom_1.default) {
-        super(al, mal, csrfToken, dom);
+    constructor(al, mal, csrfToken = '', deps = DIContainer_1.diContainer) {
+        super(al, mal, csrfToken, deps);
     }
     createPostData() {
         const result = this.createBaseMALPostItem();
@@ -933,7 +944,7 @@ class MALEntryManga extends BaseMALEntry {
             'add_manga[tags]': this.malData.tags || '',
             'add_manga[priority]': malFormData.priority,
             'add_manga[storage_type]': malFormData.storageType,
-            'add_manga[num_retail_volumes]': this.malData.manga_num_volumes || 0,
+            'add_manga[num_retail_volumes]': malFormData.numRetailVolumes,
             'add_manga[num_read_times]': this._postData.num_read_times || 0,
             'add_manga[reread_value]': malFormData.rereadValue,
             'add_manga[comments]': malFormData.comments,
@@ -959,25 +970,13 @@ exports.MALEntryManga = MALEntryManga;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const util_1 = __webpack_require__(3);
+const DIContainer_1 = __webpack_require__(9);
 class MALForm {
-    constructor(type, id) {
+    constructor(type, id, deps = DIContainer_1.diContainer) {
         this.document = null;
         this.type = type;
         this.id = id;
-    }
-    fetch() {
-        return new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.onload = function () {
-                return resolve(this.responseXML ? this.responseXML : null);
-            };
-            xhr.onerror = function (e) {
-                reject(e);
-            };
-            xhr.open('GET', `https://myanimelist.net/ownlist/${this.type}/${this.id}/edit`);
-            xhr.responseType = 'document';
-            xhr.send();
-        });
+        this.deps = deps;
     }
     getElement(id) {
         if (!this.document)
@@ -986,7 +985,7 @@ class MALForm {
     }
     async get() {
         await util_1.sleep(500);
-        const document = await this.fetch();
+        const document = await this.deps.fetchDocument(this.type, this.id);
         if (document) {
             this.document = document;
         }
@@ -1008,6 +1007,12 @@ class MALForm {
     }
     get storageValue() {
         const el = this.getElement('storage_value');
+        if (!el)
+            return '0';
+        return el.value;
+    }
+    get numRetailVolumes() {
+        const el = this.getElement('num_retail_volumes');
         if (!el)
             return '0';
         return el.value;
@@ -1044,6 +1049,30 @@ class MALForm {
     }
 }
 exports.MALForm = MALForm;
+exports.createMALForm = (type, id) => new MALForm(type, id);
+
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const util_1 = __webpack_require__(3);
+const Dom_1 = __webpack_require__(4);
+const MALForm_1 = __webpack_require__(8);
+const Log_1 = __webpack_require__(1);
+class DIContainer {
+    constructor(fetchDocumentFn = util_1.fetchDocument, malFormFactory = MALForm_1.createMALForm, dom = Dom_1.default, log = Log_1.default) {
+        this.fetchDocument = fetchDocumentFn;
+        this.malFormFactory = malFormFactory;
+        this.dom = dom;
+        this.log = log;
+    }
+}
+exports.DIContainer = DIContainer;
+exports.diContainer = new DIContainer();
 
 
 /***/ })

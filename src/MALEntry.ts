@@ -1,11 +1,12 @@
 import Dom, { IDomMethods } from './Dom';
 import * as T from "./Types";
-import { MALForm } from './MALForm';
+import { IMALForm, MALForm } from './MALForm';
+import { diContainer, IDIContainer } from './DIContainer';
 
-export const createMALEntry = (al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string, domMethods: IDomMethods) =>
+export const createMALEntry = (al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string, deps: IDIContainer) =>
     al.type === 'anime' ?
-        new MALEntryAnime(al, mal, csrfToken, domMethods) :
-        new MALEntryManga(al, mal, csrfToken, domMethods);
+        new MALEntryAnime(al, mal, csrfToken, deps) :
+        new MALEntryManga(al, mal, csrfToken, deps);
 
 type StringNumMap = { [key: string]: number }
 const MALStatus: StringNumMap = {
@@ -59,14 +60,19 @@ export class BaseMALEntry implements MALEntry {
     malData: T.MALLoadItem
     _postData: T.MALPostItem
     csrfToken: string
-    Dom: IDomMethods
+    deps: IDIContainer
 
-    constructor(al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string = '', dom: IDomMethods = Dom) {
+    constructor(
+        al: T.FormattedEntry,
+        mal: T.MALLoadItem,
+        csrfToken: string = '',
+        deps: IDIContainer = diContainer
+    ) {
         this.alData = al;
         this.malData = mal;
         this.csrfToken = csrfToken;
         this._postData = this.createPostData();
-        this.Dom = dom;
+        this.deps = deps;
     }
 
     protected createBaseMALPostItem(): T.MALPostItem {
@@ -89,7 +95,7 @@ export class BaseMALEntry implements MALEntry {
 
     buildDateString(date: T.MediaDate): string | null {
         if (date.month === 0 && date.day === 0 && date.year === 0) return null;
-        const dateSetting = this.Dom.getDateSetting();
+        const dateSetting = this.deps.dom.getDateSetting();
         const month = `${String(date.month).length < 2 ? '0' : ''}${date.month}`;
         const day = `${String(date.day).length < 2 ? '0' : ''}${date.day}`;
         const year = `${date.year ? String(date.year).slice(-2) : 0}`;
@@ -186,8 +192,13 @@ export class BaseMALEntry implements MALEntry {
 }
 
 export class MALEntryAnime extends BaseMALEntry {
-    constructor(al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string, dom: IDomMethods = Dom) {
-        super(al, mal, csrfToken, dom);
+    constructor(
+        al: T.FormattedEntry,
+        mal: T.MALLoadItem,
+        csrfToken: string = '',
+        deps: IDIContainer = diContainer
+    ) {
+        super(al, mal, csrfToken, deps);
     }
 
     createPostData(): T.MALPostItem {
@@ -207,7 +218,7 @@ export class MALEntryAnime extends BaseMALEntry {
     }
 
     async formData(): Promise<string> {
-        const malFormData = new MALForm(this.alData.type, this.alData.id);
+        const malFormData = this.deps.malFormFactory(this.alData.type, this.alData.id);
         await malFormData.get();
         const formData = {
             anime_id: this.malData.anime_id,
@@ -242,8 +253,13 @@ export class MALEntryAnime extends BaseMALEntry {
 }
 
 export class MALEntryManga extends BaseMALEntry {
-    constructor(al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string, dom: IDomMethods = Dom) {
-        super(al, mal, csrfToken, dom);
+    constructor(
+        al: T.FormattedEntry,
+        mal: T.MALLoadItem,
+        csrfToken: string = '',
+        deps: IDIContainer = diContainer
+    ) {
+        super(al, mal, csrfToken, deps);
     }
 
     createPostData(): T.MALPostItem {
@@ -286,7 +302,7 @@ export class MALEntryManga extends BaseMALEntry {
             'add_manga[tags]': this.malData.tags || '',
             'add_manga[priority]': malFormData.priority,
             'add_manga[storage_type]': malFormData.storageType,
-            'add_manga[num_retail_volumes]': this.malData.manga_num_volumes || 0,
+            'add_manga[num_retail_volumes]': malFormData.numRetailVolumes,
             'add_manga[num_read_times]': this._postData.num_read_times || 0,
             'add_manga[reread_value]': malFormData.rereadValue,
             'add_manga[comments]': malFormData.comments,

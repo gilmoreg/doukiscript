@@ -28,7 +28,7 @@ const sync = async (e: Event) => {
     }
     Log.info(`Fetched Anilist data.`);
 
-    const mal = new MAL(malUsername, csrfToken, Dom, Log);
+    const mal = new MAL(malUsername, csrfToken);
     await mal.syncType('anime', anilistList.anime);
     await mal.syncType('manga', anilistList.manga);
     Log.info('Import complete.');

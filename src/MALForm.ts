@@ -1,29 +1,29 @@
-import { SSL_OP_SSLEAY_080_CLIENT_DH_BUG } from "constants";
 import { sleep } from "./util";
+import { IDIContainer, diContainer } from "./DIContainer";
 
-export class MALForm {
+export interface IMALForm {
+    get(): Promise<void>
+    priority: string
+    storageType: string
+    storageValue: string
+    numRetailVolumes: string
+    rewatchValue: string
+    rereadValue: string
+    comments: string
+    discussionSetting: string
+    SNSSetting: string
+}
+
+export class MALForm implements IMALForm {
     type: string
     id: number
     document: Document | null = null
+    deps: IDIContainer
 
-    constructor(type: string, id: number) {
+    constructor(type: string, id: number, deps: IDIContainer = diContainer) {
         this.type = type;
         this.id = id;
-    }
-
-    private fetch(): Promise<Document | null> {
-        return new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.onload = function () {
-                return resolve(this.responseXML ? this.responseXML : null);
-            }
-            xhr.onerror = function (e) {
-                reject(e);
-            }
-            xhr.open('GET', `https://myanimelist.net/ownlist/${this.type}/${this.id}/edit`);
-            xhr.responseType = 'document';
-            xhr.send();
-        });
+        this.deps = deps;
     }
 
     private getElement(id: string): HTMLSelectElement | null {
@@ -33,7 +33,7 @@ export class MALForm {
 
     async get() {
         await sleep(500);
-        const document = await this.fetch();
+        const document = await this.deps.fetchDocument(this.type, this.id);
         if (document) {
             this.document = document;
         } else {
@@ -55,6 +55,12 @@ export class MALForm {
 
     get storageValue(): string {
         const el = this.getElement('storage_value');
+        if (!el) return '0';
+        return el.value;
+    }
+
+    get numRetailVolumes(): string {
+        const el = this.getElement('num_retail_volumes');
         if (!el) return '0';
         return el.value;
     }
@@ -89,3 +95,5 @@ export class MALForm {
         return el.value;
     }
 }
+
+export const createMALForm = (type: string, id: number) => new MALForm(type, id);

@@ -12,3 +12,16 @@ export const getOperationDisplayName = (operation: string) => {
             throw new Error('Unknown operation type');
     }
 };
+export const fetchDocument = (type: string, id: number): Promise<Document | null> =>
+    new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.onload = function () {
+            return resolve(this.responseXML ? this.responseXML : null);
+        }
+        xhr.onerror = function (e) {
+            reject(e);
+        }
+        xhr.open('GET', `https://myanimelist.net/ownlist/${type}/${id}/edit`);
+        xhr.responseType = 'document';
+        xhr.send();
+    });
