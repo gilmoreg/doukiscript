@@ -71,7 +71,6 @@ export interface BaseMALLoadItem extends BaseMALItem {
 
 export interface MALLoadAnime extends BaseMALLoadItem {
     anime_id: number
-    num_watched_times: number
     num_watched_episodes: number
     anime_num_episodes: number
     anime_airing_status: number
@@ -79,7 +78,6 @@ export interface MALLoadAnime extends BaseMALLoadItem {
 
 export interface MALLoadManga extends BaseMALLoadItem {
     manga_id: number
-    num_read_times: number
     num_read_chapters: number
     num_read_volumes: number
     manga_num_chapters: number

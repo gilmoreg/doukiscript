@@ -760,6 +760,9 @@ class BaseMALEntry {
                 case 'csrf_token':
                 case 'anime_id':
                 case 'manga_id':
+                // This data is not part of the load.json list and so can't be used as update test
+                case 'num_watched_times':
+                case 'num_read_times':
                     return false;
                 case 'start_date':
                 case 'finish_date':
@@ -780,20 +783,6 @@ class BaseMALEntry {
                     // to be updated now that the count is available
                     {
                         if (this.malData.status === MALStatus.Completed && this.malData[key] !== 0) {
-                            return false;
-                        }
-                        if (this._postData[key] !== this.malData[key]) {
-                            return true;
-                        }
-                        ;
-                        return false;
-                    }
-                // In certain cases the next two values will be missing from the MAL data and trying to update them will do nothing.
-                // To avoid a meaningless update every time, skip it if undefined on MAL
-                case 'num_watched_times':
-                case 'num_read_times':
-                    {
-                        if (!this.malData.hasOwnProperty(key)) {
                             return false;
                         }
                         if (this._postData[key] !== this.malData[key]) {
@@ -852,7 +841,8 @@ class MALEntryAnime extends BaseMALEntry {
         // For new items it will not be present; however the list will refresh after add and
         // it should be available then
         result.num_watched_episodes = this.malData && this.malData.anime_num_episodes ?
-            Math.min(this.alData.progress, this.malData.anime_num_episodes) : 0;
+            Math.min(this.alData.progress, this.malData.anime_num_episodes) :
+            this.alData.progress || 0;
         return result;
     }
     async formData() {
@@ -903,9 +893,11 @@ class MALEntryManga extends BaseMALEntry {
         // For new items they will not be present; however the list will refresh after add and
         // they should be available then
         result.num_read_chapters = this.malData && this.malData.manga_num_chapters ?
-            Math.min(this.alData.progress, this.malData.manga_num_chapters) : 0;
+            Math.min(this.alData.progress, this.malData.manga_num_chapters) :
+            this.alData.progress || 0;
         result.num_read_volumes = this.malData && this.malData.manga_num_volumes ?
-            Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes) : 0;
+            Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes) :
+            this.alData.progressVolumes || 0;
         return result;
     }
     async formData() {

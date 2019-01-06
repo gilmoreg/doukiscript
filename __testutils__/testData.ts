@@ -14,7 +14,6 @@ const malItem: Types.BaseMALItem = {
 const malAnime = {
     ...malItem,
     anime_id: 1,
-    num_watched_times: 1,
     num_watched_episodes: 12,
     anime_airing_status: 2,
     anime_num_episodes: 12,
@@ -24,7 +23,6 @@ const malManga = {
     ...malItem,
     manga_id: 2,
     num_read_chapters: 12,
-    num_read_times: 1,
     num_read_volumes: 1
 } as Types.MALLoadManga;
 

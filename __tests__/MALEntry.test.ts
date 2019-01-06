@@ -4,6 +4,14 @@ import * as fakes from '../__testutils__/testData';
 const fakeDomMethods = fakes.createFakeDomMethods();
 
 describe('shouldUpdate()', () => {
+    it('should not update if data is the same', () => {
+        const malAnime = fakes.createFakeMALAnime();
+        const alAnime = fakes.createFakeAnilistAnime();
+        const malEntry = new MALEntryAnime(alAnime, malAnime, 'csrfToken', fakeDomMethods);
+        const result = malEntry.shouldUpdate();
+        expect(result).toEqual(false);
+    });
+
     it('should update if the start date is different', () => {
         const malAnime = fakes.createFakeMALAnime({ start_date_string: '2-2-2002' });
         const alAnime = fakes.createFakeAnilistAnime({ startedAt: { year: 2002, month: 1, day: 1 } });

@@ -3,15 +3,6 @@
 ## Disclaimer
 Use this script at your own risk! The author assumes no responsibility for any damages of any kind. It is *strongly* recommended you test this out on a throwaway MAL account before attempting to sync your main account.
 
-## WARNING
-Using this script will override certain advanced settings for MAL entries:
-1. **Storage** will be cleared
-2. **Rewatch/Re-read Value** will be cleared (not the number of rewatches, but your "rewatchability" setting from Low to Very High)
-3. **Ask to Discuss?** will be set to: *Don't ask to discuss*
-4. **Post to SNS** will be set to: *Follow default setting*
-
-**Do not use this script if you care about those settings.** See details under Notes.
-
 ## About
 So you're an Anilist user (perhaps you came over after MAL melted down) but you still want to keep your MAL page up to date for all your friends who still use it. Douki can sync your Anilist lists to MAL with the click of a button.
 
@@ -21,8 +12,9 @@ Unfortunately, given that MAL shut down its public API over security concerns, t
 1. Install a userscript manager ([choose one from this list](https://greasyfork.org/en))
 2. Install the script [here](https://greasyfork.org/en/scripts/373467-douki)
 3. Visit [the import page on Myanimelist.net](https://myanimelist.net/import.php). *You need to be logged in to MAL.*
-4. Alternatively, a link to the import page is added to the List dropdown at the top of the main page
-5. Fill in your Anilist username and hit `Import`
+4. Ensure the date setting matches your setting on MAL (US or Euro)
+5. Alternatively, a link to the import page is added to the List dropdown at the top of the main page
+6. Fill in your Anilist username and hit `Import`
 
 ## Notes
 - The most common source of errors are titles that are not yet approved on Myanimelist. These cannot be added even manually. **Before reporting errors, check to see if you can add an item manually. If you can't add it, neither can Douki.**
@@ -30,6 +22,6 @@ Unfortunately, given that MAL shut down its public API over security concerns, t
 - Custom lists will be imported into the main MAL list.
 - Private lists will be ignored.
 - Tags and notes will be ignored. Keeping these consistent across the two sites is too difficult for now. I am open to attempting this in the future, but no promises.
-- The reason certain advanced settings have to be overwritten is that this data must be supplied when editing an entry, but due to limitations with how MAL works there is no practical way for the script to know what you have those set to. In lieu of this,  defaults have been chosen. Feedback on the choices is welcome. "Storage" is the one which *might* be possible to implement, but it would be a huge effort and I doubt many people use this setting. Let me know if it is important to you.
+- Due to a quirk with MAL's site, changing the number of times you've rewatched a show or reread a manga alone will not trigger an update. You need to also change status, episode/chapter count, or score for the script to pick up on a change and update the entry.
 
 Please report issues [on the Anilist forum thread](https://anilist.co/forum/thread/2654). All suggestions, feedback, or bug reports are welcome.

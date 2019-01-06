@@ -110,6 +110,9 @@ export class BaseMALEntry implements MALEntry {
                 case 'csrf_token':
                 case 'anime_id':
                 case 'manga_id':
+                // This data is not part of the load.json list and so can't be used as update test
+                case 'num_watched_times':
+                case 'num_read_times':
                     return false;
                 case 'start_date':
                 case 'finish_date':
@@ -130,19 +133,6 @@ export class BaseMALEntry implements MALEntry {
                     // to be updated now that the count is available
                     {
                         if (this.malData.status === MALStatus.Completed && this.malData[key] !== 0) {
-                            return false;
-                        }
-                        if (this._postData[key] !== this.malData[key]) {
-                            return true;
-                        };
-                        return false;
-                    }
-                // In certain cases the next two values will be missing from the MAL data and trying to update them will do nothing.
-                // To avoid a meaningless update every time, skip it if undefined on MAL
-                case 'num_watched_times':
-                case 'num_read_times':
-                    {
-                        if (!this.malData.hasOwnProperty(key)) {
                             return false;
                         }
                         if (this._postData[key] !== this.malData[key]) {
