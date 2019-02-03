@@ -7,8 +7,10 @@ const malItem: Types.BaseMALItem = {
     status: 2,
     csrf_token: 'csrfToken',
     score: 10,
-    finish_date_string: null,
-    start_date_string: null,
+    finish_date_string: '01-01-99',
+    start_date_string: '01-01-99',
+    priority_string: '0',
+    comments: 'comments',
 };
 
 const malAnime = {
@@ -25,7 +27,8 @@ const malManga = {
     manga_num_chapters: 12,
     manga_num_volumes: 1,
     num_read_chapters: 12,
-    num_read_volumes: 1
+    num_read_volumes: 1,
+    manga_publishing_status: 0,
 } as Types.MALLoadManga;
 
 export const createFakeMALAnime = (data: any = {}) =>
@@ -38,8 +41,8 @@ const alAnime: Types.FormattedEntry = {
     score: 10,
     progress: 12,
     progressVolumes: 0,
-    startedAt: createDate(),
-    completedAt: createDate(),
+    startedAt: createDate(99, 1, 1),
+    completedAt: createDate(99, 1, 1),
     repeat: 1,
     id: malAnime.anime_id,
     title: 'title',
@@ -51,8 +54,8 @@ const alManga: Types.FormattedEntry = {
     score: 10,
     progress: 12,
     progressVolumes: 1,
-    startedAt: createDate(),
-    completedAt: createDate(),
+    startedAt: createDate(99, 1, 1),
+    completedAt: createDate(99, 1, 1),
     repeat: 1,
     id: malManga.manga_id,
     title: 'title',

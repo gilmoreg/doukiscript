@@ -1,6 +1,5 @@
 import { MALEntryAnime, MALEntryManga } from '../src/MALEntry';
 import * as fakes from '../__testutils__/testData';
-import { AssertionError } from 'assert';
 
 const fakeDomMethods = fakes.createFakeDomMethods();
 

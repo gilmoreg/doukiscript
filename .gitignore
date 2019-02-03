@@ -64,3 +64,6 @@ typings/
 dist/
 
 notes
+
+# Vs Code Go tools keep creating this; exclude it
+go.mod

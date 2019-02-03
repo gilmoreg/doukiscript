@@ -2,10 +2,10 @@ import * as T from "./Types";
 import { MALForm } from './MALForm';
 import Dom, { IDomMethods } from "./Dom";
 
-export const createMALEntry = (al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string) =>
+export const createMALEntry = (al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string, dom: IDomMethods) =>
     al.type === 'anime' ?
-        new MALEntryAnime(al, mal, csrfToken) :
-        new MALEntryManga(al, mal, csrfToken);
+        new MALEntryAnime(al, mal, csrfToken, dom) :
+        new MALEntryManga(al, mal, csrfToken, dom);
 
 type StringNumMap = { [key: string]: number }
 const MALStatus: StringNumMap = {

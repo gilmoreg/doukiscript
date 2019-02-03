@@ -5,8 +5,8 @@ global.fetch = fetch;
 class FakeDOM {
     querySelector(selector: string) {
         switch (selector) {
-            case 'add_anime_comments':
-            case 'add_manga_comments':
+            case '#add_anime_comments':
+            case '#add_manga_comments':
                 return {
                     value: 'comments'
                 }

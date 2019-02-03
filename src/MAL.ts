@@ -2,16 +2,19 @@ import { sleep } from './util';
 import { MALHashMap, FormattedEntry, MALLoadItem } from './Types';
 import { MALEntry, createMALEntry } from './MALEntry';
 import Log, { ILog } from './Log';
+import Dom, { IDomMethods } from "./Dom";
 
 export default class MAL {
     username: string
     csrfToken: string
     Log: ILog
+    dom: IDomMethods
 
-    constructor(username: string, csrfToken: string, log: ILog = Log) {
+    constructor(username: string, csrfToken: string, log: ILog = Log, dom: IDomMethods = Dom) {
         this.username = username;
         this.csrfToken = csrfToken;
         this.Log = log;
+        this.dom = dom;
     }
 
     private createMALHashMap(malList: Array<MALLoadItem>, type: string): MALHashMap {
@@ -42,7 +45,7 @@ export default class MAL {
 
     private async getEntriesList(anilistList: Array<FormattedEntry>, type: string): Promise<Array<MALEntry>> {
         const malHashMap = await this.getMALHashMap(type);
-        return anilistList.map(entry => createMALEntry(entry, malHashMap[entry.id], this.csrfToken));
+        return anilistList.map(entry => createMALEntry(entry, malHashMap[entry.id], this.csrfToken, this.dom));
     }
 
     private async malEdit(data: MALEntry) {
