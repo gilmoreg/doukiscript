@@ -48,7 +48,7 @@ describe('syncType()', () => {
         expect(result.num_read_volumes).toEqual(2);
     });
 
-    it('should use MAL episode counts for completed shows when they differ', async () => {
+    it('should use MAL episode counts for completed shows when AL is higher', async () => {
         // MAL counts this show as having 12 episodes; let's say AL says it has 13
         const alAnime = fakes.createFakeAnilistAnime({ progress: 13 });
         const mockMAL = new MockMAL();
@@ -59,7 +59,7 @@ describe('syncType()', () => {
         expect(result.num_watched_episodes).toEqual(12);
     });
 
-    it('should use MAL chapter counts for completed manga when they differ', async () => {
+    it('should use MAL chapter counts for completed manga when AL is higher', async () => {
         // MAL counts this manga as having 12 chapters; let's say AL says it has 13
         const alManga = fakes.createFakeAnilistManga({ progress: 13 });
         const mockMAL = new MockMAL();
@@ -70,9 +70,42 @@ describe('syncType()', () => {
         expect(result.num_read_chapters).toEqual(12);
     });
 
-    it('should use MAL volume counts for completed manga when they differ', async () => {
+    it('should use MAL volume counts for completed manga when AL is higher', async () => {
         // MAL counts this manga as having 2 volumes; let's say AL says it has 3
         const alManga = fakes.createFakeAnilistManga({ progressVolumes: 3 });
+        const mockMAL = new MockMAL();
+        const mal = createFakeMAL();
+        await mal.syncType('manga', [alManga]);
+        const [result] = mockMAL.manga;
+        // Should reflect MAL's count, not AL's in the end
+        expect(result.num_read_volumes).toEqual(2);
+    });
+
+    it('should use MAL episode count for completed show when AL is lower', async () => {
+        // MAL counts this show as having 12 episodes; let's say AL says it has 11
+        const alAnime = fakes.createFakeAnilistAnime({ status: 'COMPLETED', progress: 11 });
+        const mockMAL = new MockMAL();
+        const mal = createFakeMAL();
+        await mal.syncType('anime', [alAnime]);
+        const [result] = mockMAL.anime;
+        // Should reflect MAL's count, not AL's in the end
+        expect(result.num_watched_episodes).toEqual(12);
+    });
+
+    it('should use MAL chapter counts for completed manga when AL is lower', async () => {
+        // MAL counts this manga as having 12 chapters; let's say AL says it has 11
+        const alManga = fakes.createFakeAnilistManga({ status: 'COMPLETED', progress: 11 });
+        const mockMAL = new MockMAL();
+        const mal = createFakeMAL();
+        await mal.syncType('manga', [alManga]);
+        const [result] = mockMAL.manga;
+        // Should reflect MAL's count, not AL's in the end
+        expect(result.num_read_chapters).toEqual(12);
+    });
+
+    it('should use MAL volume counts for completed manga when AL is lower', async () => {
+        // MAL counts this manga as having 2 volumes; let's say AL says it has 1
+        const alManga = fakes.createFakeAnilistManga({ status: 'COMPLETED', progressVolumes: 1 });
         const mockMAL = new MockMAL();
         const mal = createFakeMAL();
         await mal.syncType('manga', [alManga]);

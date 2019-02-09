@@ -196,11 +196,18 @@ export class MALEntryAnime extends BaseMALEntry {
 
         if (this.alData.repeat) result.num_watched_times = this.alData.repeat;
 
-        // If MAL episode count is available, use it as a maximum
-        // For new items it will not be present; however the list will refresh after add and
-        // it should be available then
-        result.num_watched_episodes = this.malData && this.malData.anime_num_episodes ?
-            Math.min(this.alData.progress, this.malData.anime_num_episodes) : 0;
+        // If MAL episode count is available, use it
+        // For completed shows, use it outright in case AL counts fewer episodes
+        // Otherwise, use it as a maximum
+        // For new items it will not be present; in that case set it to 0
+        // When the list refreshes the count will be available and be set then
+        if (result.status === MALStatus.Completed) {
+            result.num_watched_episodes = this.malData && this.malData.anime_num_episodes ?
+                this.malData.anime_num_episodes : 0;
+        } else {
+            result.num_watched_episodes = this.malData && this.malData.anime_num_episodes ?
+                Math.min(this.alData.progress, this.malData.anime_num_episodes) : 0;
+        }
 
         return result;
     }
@@ -256,14 +263,24 @@ export class MALEntryManga extends BaseMALEntry {
 
         if (this.alData.repeat) result.num_read_times = this.alData.repeat;
 
-        // If MAL chapter and volume counts are available, use them as a maximum
-        // For new items they will not be present; however the list will refresh after add and
-        // they should be available then
-        result.num_read_chapters = this.malData && this.malData.manga_num_chapters ?
-            Math.min(this.alData.progress, this.malData.manga_num_chapters) : 0;
+        // If MAL chapter and volume counts are available, use them
+        // For completed shows, use them outright in case AL counts fewer chapters/volumes
+        // Otherwise, use them as a maximum
+        // For new items they will not be present; in that case set them to 0
+        // When the list refreshes the counts will be available and be set then
+        if (result.status === MALStatus.Completed) {
+            result.num_read_chapters = this.malData && this.malData.manga_num_chapters ?
+                this.malData.manga_num_chapters : 0;
 
-        result.num_read_volumes = this.malData && this.malData.manga_num_volumes ?
-            Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes) : 0;
+            result.num_read_volumes = this.malData && this.malData.manga_num_volumes ?
+                this.malData.manga_num_volumes : 0;
+        } else {
+            result.num_read_chapters = this.malData && this.malData.manga_num_chapters ?
+                Math.min(this.alData.progress, this.malData.manga_num_chapters) : 0;
+
+            result.num_read_volumes = this.malData && this.malData.manga_num_volumes ?
+                Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes) : 0;
+        }
 
         return result;
     }

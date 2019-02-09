@@ -27,7 +27,7 @@ const malManga = {
     manga_num_chapters: 12,
     manga_num_volumes: 2,
     num_read_chapters: 12,
-    num_read_volumes: 1,
+    num_read_volumes: 2,
     manga_publishing_status: 0,
 } as Types.MALLoadManga;
 
@@ -53,7 +53,7 @@ const alManga: Types.FormattedEntry = {
     status: 'COMPLETED',
     score: 10,
     progress: 12,
-    progressVolumes: 1,
+    progressVolumes: 2,
     startedAt: createDate(99, 1, 1),
     completedAt: createDate(99, 1, 1),
     repeat: 1,

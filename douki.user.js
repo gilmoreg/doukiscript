@@ -2,7 +2,7 @@
 // @name        Douki
 // @namespace   http://gilmoreg.com
 // @description Import Anime and Manga Lists from Anilist (see https://anilist.co/forum/thread/2654 for more info)
-// @version     0.2.0
+// @version     0.2.1
 // @include     https://myanimelist.net/*
 // ==/UserScript==
 
@@ -556,11 +556,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_1 = __webpack_require__(3);
 const MALEntry_1 = __webpack_require__(7);
 const Log_1 = __webpack_require__(1);
+const Dom_1 = __webpack_require__(4);
 class MAL {
-    constructor(username, csrfToken, log = Log_1.default) {
+    constructor(username, csrfToken, log = Log_1.default, dom = Dom_1.default) {
         this.username = username;
         this.csrfToken = csrfToken;
         this.Log = log;
+        this.dom = dom;
     }
     createMALHashMap(malList, type) {
         const hashMap = {};
@@ -588,7 +590,7 @@ class MAL {
     }
     async getEntriesList(anilistList, type) {
         const malHashMap = await this.getMALHashMap(type);
-        return anilistList.map(entry => MALEntry_1.createMALEntry(entry, malHashMap[entry.id], this.csrfToken));
+        return anilistList.map(entry => MALEntry_1.createMALEntry(entry, malHashMap[entry.id], this.csrfToken, this.dom));
     }
     async malEdit(data) {
         const { type, id } = data;
@@ -680,9 +682,9 @@ exports.default = MAL;
 Object.defineProperty(exports, "__esModule", { value: true });
 const MALForm_1 = __webpack_require__(8);
 const Dom_1 = __webpack_require__(4);
-exports.createMALEntry = (al, mal, csrfToken) => al.type === 'anime' ?
-    new MALEntryAnime(al, mal, csrfToken) :
-    new MALEntryManga(al, mal, csrfToken);
+exports.createMALEntry = (al, mal, csrfToken, dom) => al.type === 'anime' ?
+    new MALEntryAnime(al, mal, csrfToken, dom) :
+    new MALEntryManga(al, mal, csrfToken, dom);
 const MALStatus = {
     Current: 1,
     Completed: 2,
@@ -787,7 +789,6 @@ class BaseMALEntry {
                         if (this._postData[key] !== this.malData[key]) {
                             return true;
                         }
-                        ;
                         return false;
                     }
                 default:
@@ -836,12 +837,19 @@ class MALEntryAnime extends BaseMALEntry {
         result.anime_id = this.alData.id;
         if (this.alData.repeat)
             result.num_watched_times = this.alData.repeat;
-        // If MAL episode count is available, use it as a maximum
-        // For new items it will not be present; however the list will refresh after add and
-        // it should be available then
-        result.num_watched_episodes = this.malData && this.malData.anime_num_episodes ?
-            Math.min(this.alData.progress, this.malData.anime_num_episodes) :
-            this.alData.progress || 0;
+        // If MAL episode count is available, use it
+        // For completed shows, use it outright in case AL counts fewer episodes
+        // Otherwise, use it as a maximum
+        // For new items it will not be present; in that case set it to 0
+        // When the list refreshes the count will be available and be set then
+        if (result.status === MALStatus.Completed) {
+            result.num_watched_episodes = this.malData && this.malData.anime_num_episodes ?
+                this.malData.anime_num_episodes : 0;
+        }
+        else {
+            result.num_watched_episodes = this.malData && this.malData.anime_num_episodes ?
+                Math.min(this.alData.progress, this.malData.anime_num_episodes) : 0;
+        }
         return result;
     }
     async formData() {
@@ -888,15 +896,23 @@ class MALEntryManga extends BaseMALEntry {
         result.manga_id = this.alData.id;
         if (this.alData.repeat)
             result.num_read_times = this.alData.repeat;
-        // If MAL chapter and volume counts are available, use them as a maximum
-        // For new items they will not be present; however the list will refresh after add and
-        // they should be available then
-        result.num_read_chapters = this.malData && this.malData.manga_num_chapters ?
-            Math.min(this.alData.progress, this.malData.manga_num_chapters) :
-            this.alData.progress || 0;
-        result.num_read_volumes = this.malData && this.malData.manga_num_volumes ?
-            Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes) :
-            this.alData.progressVolumes || 0;
+        // If MAL chapter and volume counts are available, use them
+        // For completed shows, use them outright in case AL counts fewer chapters/volumes
+        // Otherwise, use them as a maximum
+        // For new items they will not be present; in that case set them to 0
+        // When the list refreshes the counts will be available and be set then
+        if (result.status === MALStatus.Completed) {
+            result.num_read_chapters = this.malData && this.malData.manga_num_chapters ?
+                this.malData.manga_num_chapters : 0;
+            result.num_read_volumes = this.malData && this.malData.manga_num_volumes ?
+                this.malData.manga_num_volumes : 0;
+        }
+        else {
+            result.num_read_chapters = this.malData && this.malData.manga_num_chapters ?
+                Math.min(this.alData.progress, this.malData.manga_num_chapters) : 0;
+            result.num_read_volumes = this.malData && this.malData.manga_num_volumes ?
+                Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes) : 0;
+        }
         return result;
     }
     async formData() {
