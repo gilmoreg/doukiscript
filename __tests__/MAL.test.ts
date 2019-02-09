@@ -47,4 +47,14 @@ describe('syncType()', () => {
         const [result] = mockMAL.manga;
         expect(result.num_read_volumes).toEqual(2);
     });
+
+    it.only('should use MAL episode counts for completed shows when they differ', async () => {
+        const malAnime = fakes.createFakeMALAnime({ anime_num_episodes: 24 });
+        const alAnime = fakes.createFakeAnilistAnime();
+        const mockMAL = new MockMAL([malAnime]);
+        const mal = createFakeMAL();
+        await mal.syncType('anime', [alAnime]);
+        const [result] = mockMAL.anime;
+        expect(result.num_watched_episodes).toEqual(24);
+    });
 });

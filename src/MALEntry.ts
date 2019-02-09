@@ -137,7 +137,7 @@ export class BaseMALEntry implements MALEntry {
                         }
                         if (this._postData[key] !== this.malData[key]) {
                             return true;
-                        };
+                        }
                         return false;
                     }
                 default:
@@ -200,8 +200,7 @@ export class MALEntryAnime extends BaseMALEntry {
         // For new items it will not be present; however the list will refresh after add and
         // it should be available then
         result.num_watched_episodes = this.malData && this.malData.anime_num_episodes ?
-            Math.min(this.alData.progress, this.malData.anime_num_episodes) :
-            this.alData.progress || 0;
+            Math.min(this.alData.progress, this.malData.anime_num_episodes) : 0;
 
         return result;
     }
@@ -261,12 +260,10 @@ export class MALEntryManga extends BaseMALEntry {
         // For new items they will not be present; however the list will refresh after add and
         // they should be available then
         result.num_read_chapters = this.malData && this.malData.manga_num_chapters ?
-            Math.min(this.alData.progress, this.malData.manga_num_chapters) :
-            this.alData.progress || 0;
+            Math.min(this.alData.progress, this.malData.manga_num_chapters) : 0;
 
         result.num_read_volumes = this.malData && this.malData.manga_num_volumes ?
-            Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes) :
-            this.alData.progressVolumes || 0;
+            Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes) : 0;
 
         return result;
     }
