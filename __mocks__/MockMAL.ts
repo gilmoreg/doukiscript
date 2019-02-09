@@ -17,6 +17,9 @@ const addRegex = /^https:\/\/myanimelist\.net\/ownlist\/(.+)\/add\.json$/;
 const animeDb: any = {
     1: {
         anime_num_episodes: 12,
+    },
+    3: {
+        anime_num_episodes: 0,
     }
 }
 
@@ -25,6 +28,11 @@ const mangaDb: any = {
         manga_num_chapters: 12,
         manga_num_volumes: 2,
         manga_publishing_status: 0,
+    },
+    4: {
+        manga_num_chapters: 0,
+        manga_num_volumes: 0,
+        manga_publishing_status: 1,
     }
 }
 
