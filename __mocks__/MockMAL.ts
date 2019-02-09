@@ -14,6 +14,20 @@ const editRegex = /^https:\/\/myanimelist\.net\/ownlist\/(.+)\/(.+)\/edit\?hideL
 // https://myanimelist.net/ownlist/${data.type}/add.json
 const addRegex = /^https:\/\/myanimelist\.net\/ownlist\/(.+)\/add\.json$/;
 
+const animeDb: any = {
+    1: {
+        anime_num_episodes: 12,
+    }
+}
+
+const mangaDb: any = {
+    2: {
+        manga_num_chapters: 12,
+        manga_num_volumes: 2,
+        manga_publishing_status: 0,
+    }
+}
+
 const parseFormData = (formData: string) => {
     const result: any = {};
     formData.split('&').forEach(i => {
@@ -24,6 +38,19 @@ const parseFormData = (formData: string) => {
     return result;
 }
 
+const createDateString = (listType: string, dateType: string, f: any): string => {
+    const rawMonth = f[`add_${listType}[${dateType}_date][month]`];
+    const rawDay = f[`add_${listType}[${dateType}_date][day]`];
+    const rawYear = f[`add_${listType}[${dateType}_date][year]`];
+
+    const month = `${String(rawMonth).length < 2 ? '0' : ''}${rawMonth}`;
+    const day = `${String(rawDay).length < 2 ? '0' : ''}${rawDay}`;
+    const year = `${rawYear ? String(rawYear).slice(-2) : 0}`;
+
+    // Assuming dateSetting = 'a':
+    return `${month}-${day}-${year}`;
+}
+
 const formDataToLoadAnime = (f: T.MALAnimeFormData, e: T.MALLoadAnime): T.MALLoadAnime => {
     const entry: T.MALLoadAnime = e || fakes.createFakeMALAnime();
     return {
@@ -31,8 +58,8 @@ const formDataToLoadAnime = (f: T.MALAnimeFormData, e: T.MALLoadAnime): T.MALLoa
         num_watched_episodes: Number(f['add_anime[num_watched_episodes]']),
         anime_num_episodes: entry.anime_num_episodes,
         anime_airing_status: entry.anime_airing_status,
-        finish_date_string: `${f["add_anime[finish_date][day]"]}-${f['add_anime[finish_date][month]']}-${f['add_anime[finish_date][year]']}`,
-        start_date_string: `${f["add_anime[start_date][day]"]}-${f['add_anime[start_date][month]']}-${f['add_anime[start_date][year]']}`,
+        finish_date_string: createDateString('anime', 'finish', f),
+        start_date_string: createDateString('anime', 'start', f),
         priority_string: `${f['add_anime[priority]']}`,
         comments: f['add_anime[comments]'],
         score: Number(f['add_anime[score]']),
@@ -50,8 +77,8 @@ const formDataToLoadManga = (f: T.MALMangaFormData, e: T.MALLoadManga): T.MALLoa
         manga_num_chapters: entry.manga_num_chapters,
         manga_num_volumes: entry.manga_num_volumes,
         manga_publishing_status: entry.manga_publishing_status,
-        finish_date_string: `${f["add_manga[finish_date][day]"]}-${f['add_manga[finish_date][month]']}-${f['add_manga[finish_date][year]']}`,
-        start_date_string: `${f["add_manga[start_date][day]"]}-${f['add_manga[start_date][month]']}-${f['add_manga[start_date][year]']}`,
+        finish_date_string: createDateString('manga', 'finish', f),
+        start_date_string: createDateString('manga', 'start', f),
         priority_string: `${f['add_manga[priority]']}`,
         comments: f['add_manga[comments]'],
         score: Number(f['add_manga[score]']),
@@ -64,7 +91,7 @@ class MockMAL {
     anime: T.MALLoadAnime[]
     manga: T.MALLoadManga[]
 
-    constructor(anime: T.MALLoadAnime[] = defaultAnime, manga: T.MALLoadManga[] = defaultManga) {
+    constructor(anime: T.MALLoadAnime[] = [], manga: T.MALLoadManga[] = []) {
         this.anime = anime;
         this.manga = manga;
 
@@ -89,12 +116,20 @@ class MockMAL {
         // @ts-ignore
         const [_, type] = addRegex.exec(url);
 
-        const entry = JSON.parse(opts.body);
+        const entry: any = JSON.parse(opts.body);
 
         if (type === 'anime') {
-            this.anime.push(entry);
+            if (!animeDb[entry.anime_id]) {
+                throw new Error('unknown anime');
+            }
+            const fullEntry = { ...animeDb[entry.anime_id], ...entry };
+            this.anime.push(fullEntry);
         } else {
-            this.manga.push(entry);
+            if (!mangaDb[entry.manga_id]) {
+                throw new Error('unknown manga');
+            }
+            const fullEntry = { ...mangaDb[entry.manga_id], ...entry };
+            this.manga.push(fullEntry);
         }
 
         return ' Successfully added entry ';

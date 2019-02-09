@@ -25,7 +25,7 @@ const malManga = {
     ...malItem,
     manga_id: 2,
     manga_num_chapters: 12,
-    manga_num_volumes: 1,
+    manga_num_volumes: 2,
     num_read_chapters: 12,
     num_read_volumes: 1,
     manga_publishing_status: 0,
