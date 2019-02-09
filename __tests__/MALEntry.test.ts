@@ -1,6 +1,5 @@
 import { MALEntryAnime, MALEntryManga } from '../src/MALEntry';
 import * as fakes from '../__testutils__/testData';
-import { AssertionError } from 'assert';
 
 const fakeDomMethods = fakes.createFakeDomMethods();
 
@@ -88,19 +87,19 @@ describe('formData()', () => {
 });
 
 describe('createPostData()', () => {
-    it('should use AL data if MAL data is not available for anime', () => {
+    it('should set ep count to 0 if MAL data is not available for anime', () => {
         const alAnime = fakes.createFakeAnilistAnime();
         // @ts-ignore
         const malEntry = new MALEntryAnime(alAnime, undefined, 'csrfToken', fakeDomMethods);
-        expect(malEntry._postData.num_watched_episodes).toEqual(alAnime.progress);
+        expect(malEntry._postData.num_watched_episodes).toEqual(0);
     });
 
-    it('should use AL data if MAL data is not available for manga', () => {
+    it('should set ch/vol counts to 0 if MAL data is not available for manga', () => {
         const alManga = fakes.createFakeAnilistAnime();
         // @ts-ignore
         const malEntry = new MALEntryManga(alManga, undefined, 'csrfToken', fakeDomMethods);
-        expect(malEntry._postData.num_read_chapters).toEqual(alManga.progress);
-        expect(malEntry._postData.num_read_volumes).toEqual(alManga.progressVolumes);
+        expect(malEntry._postData.num_read_chapters).toEqual(0);
+        expect(malEntry._postData.num_read_volumes).toEqual(0);
     });
 
     it('uses MAL count if AL count is higher for completed manga', () => {
