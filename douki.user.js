@@ -2,7 +2,7 @@
 // @name        Douki
 // @namespace   http://gilmoreg.com
 // @description Import Anime and Manga Lists from Anilist (see https://anilist.co/forum/thread/2654 for more info)
-// @version     0.2.1
+// @version     0.2.2
 // @include     https://myanimelist.net/*
 // ==/UserScript==
 
@@ -837,19 +837,27 @@ class MALEntryAnime extends BaseMALEntry {
         result.anime_id = this.alData.id;
         if (this.alData.repeat)
             result.num_watched_times = this.alData.repeat;
-        // If MAL episode count is available, use it
-        // For completed shows, use it outright in case AL counts fewer episodes
-        // Otherwise, use it as a maximum
-        // For new items it will not be present; in that case set it to 0
+        /* Setting num_watched_episodes */
+        // If this is a new item, malData is undefined, so set count to 0
         // When the list refreshes the count will be available and be set then
+        if (!this.malData) {
+            result.num_watched_episodes = 0;
+            return result;
+        }
+        // If malData.anime_num_episodes is 0, the show is currently airing;
+        // We're forced to use AL's count even though that might be wrong
+        if (this.malData.anime_num_episodes === 0) {
+            result.num_watched_episodes = this.alData.progress;
+            return result;
+        }
+        // If the show is completed, use MAL's count in case AL's count is different;
+        // We don't want MAL showing higher or lower than their own count
         if (result.status === MALStatus.Completed) {
-            result.num_watched_episodes = this.malData && this.malData.anime_num_episodes ?
-                this.malData.anime_num_episodes : 0;
+            result.num_watched_episodes = this.malData.anime_num_episodes;
+            return result;
         }
-        else {
-            result.num_watched_episodes = this.malData && this.malData.anime_num_episodes ?
-                Math.min(this.alData.progress, this.malData.anime_num_episodes) : 0;
-        }
+        // Othewrise, use MAL's count as a max
+        result.num_watched_episodes = Math.min(this.alData.progress, this.malData.anime_num_episodes);
         return result;
     }
     async formData() {
@@ -896,23 +904,31 @@ class MALEntryManga extends BaseMALEntry {
         result.manga_id = this.alData.id;
         if (this.alData.repeat)
             result.num_read_times = this.alData.repeat;
-        // If MAL chapter and volume counts are available, use them
-        // For completed shows, use them outright in case AL counts fewer chapters/volumes
-        // Otherwise, use them as a maximum
-        // For new items they will not be present; in that case set them to 0
-        // When the list refreshes the counts will be available and be set then
+        /* Setting num_read_chapters and num_read_volumes */
+        // If this is a new item, malData is undefined, so set count to 0
+        // When the list refreshes the count will be available and be set then
+        if (!this.malData) {
+            result.num_read_chapters = 0;
+            result.num_read_volumes = 0;
+            return result;
+        }
+        // If malData.manga_num_chapters is 0, the manga is still publishing;
+        // We're forced to use AL's count even though that might be wrong
+        if (this.malData.manga_num_chapters === 0) {
+            result.num_read_chapters = this.alData.progress;
+            result.num_read_volumes = this.alData.progressVolumes;
+            return result;
+        }
+        // If the manga is completed, use MAL's count in case AL's count is different;
+        // We don't want MAL showing higher or lower than their own count
         if (result.status === MALStatus.Completed) {
-            result.num_read_chapters = this.malData && this.malData.manga_num_chapters ?
-                this.malData.manga_num_chapters : 0;
-            result.num_read_volumes = this.malData && this.malData.manga_num_volumes ?
-                this.malData.manga_num_volumes : 0;
+            result.num_read_chapters = this.malData.manga_num_chapters;
+            result.num_read_volumes = this.malData.manga_num_volumes;
+            return result;
         }
-        else {
-            result.num_read_chapters = this.malData && this.malData.manga_num_chapters ?
-                Math.min(this.alData.progress, this.malData.manga_num_chapters) : 0;
-            result.num_read_volumes = this.malData && this.malData.manga_num_volumes ?
-                Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes) : 0;
-        }
+        // Othewrise, use MAL's count as a max
+        result.num_read_chapters = Math.min(this.alData.progress, this.malData.manga_num_chapters);
+        result.num_read_volumes = Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes);
         return result;
     }
     async formData() {
