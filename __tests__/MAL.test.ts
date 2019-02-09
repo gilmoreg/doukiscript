@@ -113,4 +113,23 @@ describe('syncType()', () => {
         // Should reflect MAL's count, not AL's in the end
         expect(result.num_read_volumes).toEqual(2);
     });
+
+    it('should use AL count when MAL has 0 episodes', async () => {
+        const alAnime = fakes.createFakeAnilistAnime({ id: 3 });
+        const mockMAL = new MockMAL();
+        const mal = createFakeMAL();
+        await mal.syncType('anime', [alAnime]);
+        const [result] = mockMAL.anime;
+        expect(result.num_watched_episodes).toEqual(12);
+    });
+
+    it('should use AL count when MAL has 0 chapters/volumes', async () => {
+        const alManga = fakes.createFakeAnilistManga({ id: 4 });
+        const mockMAL = new MockMAL();
+        const mal = createFakeMAL();
+        await mal.syncType('manga', [alManga]);
+        const [result] = mockMAL.manga;
+        expect(result.num_read_chapters).toEqual(12);
+        expect(result.num_read_volumes).toEqual(2);
+    });
 });
