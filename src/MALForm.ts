@@ -1,4 +1,4 @@
-import { sleep } from "./util";
+import { sleep } from "./Util";
 
 export interface IMALForm {
     get(): Promise<void>

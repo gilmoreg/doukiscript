@@ -1,6 +1,6 @@
 import * as fetchMock from 'fetch-mock';
-import * as T from '../src/Types';
-import * as fakes from '../__testutils__/testData';
+import * as T from '../../src/Types';
+import * as fakes from '../../__testutils__/testData';
 
 const defaultAnime: T.MALLoadAnime[] = [fakes.createFakeMALAnime()];
 const defaultManga: T.MALLoadManga[] = [fakes.createFakeMALManga()];

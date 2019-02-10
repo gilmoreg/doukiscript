@@ -1,4 +1,4 @@
-import { ILog } from "../src/Log";
+import { ILog } from "../../src/Log";
 
 export default class FakeLog implements ILog {
     clear() {

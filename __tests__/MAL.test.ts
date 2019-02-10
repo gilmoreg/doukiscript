@@ -1,8 +1,10 @@
 import MAL from '../src/MAL';
-import FakeLog from '../__mocks__/Log';
+import FakeLog from '../__mocks__/src/Log';
 import * as fetchMock from 'fetch-mock';
 import * as fakes from '../__testutils__/testData';
-import MockMAL from '../__mocks__/MockMAL'
+import MockMAL from '../__mocks__/src/MockMAL';
+
+jest.mock('../src/Util')
 
 const createFakeMAL = () => new MAL('test', 'csrfToken', new FakeLog(), fakes.createFakeDomMethods());
 
