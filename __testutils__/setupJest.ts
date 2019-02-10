@@ -2,6 +2,10 @@ import * as fetch from 'node-fetch';
 // @ts-ignore
 global.fetch = fetch;
 
+/*
+NodeJS.Global.setTimeout: (callback: (...args: any[]) => void, ms: number, ...args: any[]) => NodeJS.Timer
+*/
+
 class FakeDOM {
     querySelector(selector: string) {
         switch (selector) {

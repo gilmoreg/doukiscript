@@ -13,7 +13,7 @@ import {
     DATE_SETTINGS_KEY,
     DROPDOWN_ITEM_ID
 } from './const';
-import { id } from './util';
+import { id } from './Util';
 
 const importFormHTML = `
     <div id="${DOUKI_FORM_ID}">

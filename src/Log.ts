@@ -1,5 +1,5 @@
 import { SYNC_LOG_ID, ERROR_LOG_ID } from './const';
-import { id, getOperationDisplayName } from './util';
+import { id, getOperationDisplayName } from './Util';
 
 type NullableElement = HTMLElement | null;
 

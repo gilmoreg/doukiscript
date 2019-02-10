@@ -1,4 +1,4 @@
-import { IMALForm } from '../src/MALForm';
+import { IMALForm } from '../../src/MALForm';
 
 export type FakeFormData = {
     priority: string

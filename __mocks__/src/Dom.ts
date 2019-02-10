@@ -1,4 +1,4 @@
-import { IDomMethods } from "../src/Dom";
+import { IDomMethods } from "../../src/Dom";
 
 export default class FakeDomMethods implements IDomMethods {
     dateSetting: string

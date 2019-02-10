@@ -1,4 +1,4 @@
-import { sleep } from './util';
+import { sleep } from './Util';
 import { MALHashMap, FormattedEntry, MALLoadItem } from './Types';
 import { MALEntry, createMALEntry } from './MALEntry';
 import Log, { ILog } from './Log';

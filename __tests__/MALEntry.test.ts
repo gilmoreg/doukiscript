@@ -1,6 +1,8 @@
 import { MALEntryAnime, MALEntryManga } from '../src/MALEntry';
 import * as fakes from '../__testutils__/testData';
 
+jest.mock('../src/Util')
+
 const fakeDomMethods = fakes.createFakeDomMethods();
 
 const parseFormData = (formData: string) => {
