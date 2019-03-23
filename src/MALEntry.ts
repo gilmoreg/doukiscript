@@ -105,6 +105,10 @@ export class BaseMALEntry implements MALEntry {
     }
 
     shouldUpdate(): boolean {
+        // If something went wrong or it didn't get added, update will not work
+        if (!this.malData || !this._postData) {
+            return false;
+        }
         return Object.keys(this._postData).some(key => {
             switch (key) {
                 case 'csrf_token':

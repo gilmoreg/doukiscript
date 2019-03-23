@@ -2,7 +2,7 @@
 // @name        Douki
 // @namespace   http://gilmoreg.com
 // @description Import Anime and Manga Lists from Anilist (see https://anilist.co/forum/thread/2654 for more info)
-// @version     0.2.2
+// @version     0.2.3
 // @include     https://myanimelist.net/*
 // ==/UserScript==
 
@@ -146,8 +146,8 @@ const sync = async (e) => {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const const_1 = __webpack_require__(2);
-const util_1 = __webpack_require__(3);
-const getCountLog = (operation, type) => document.querySelector(util_1.id(`douki-${operation}-${type}-items`));
+const Util_1 = __webpack_require__(3);
+const getCountLog = (operation, type) => document.querySelector(Util_1.id(`douki-${operation}-${type}-items`));
 class Log {
     constructor() {
         this.errorLogElement = null;
@@ -155,13 +155,13 @@ class Log {
     }
     get errorLog() {
         if (!this.errorLogElement) {
-            this.errorLogElement = document.querySelector(util_1.id(const_1.ERROR_LOG_ID));
+            this.errorLogElement = document.querySelector(Util_1.id(const_1.ERROR_LOG_ID));
         }
         return this.errorLogElement;
     }
     get syncLog() {
         if (!this.syncLogElement) {
-            this.syncLogElement = document.querySelector(util_1.id(const_1.SYNC_LOG_ID));
+            this.syncLogElement = document.querySelector(Util_1.id(const_1.SYNC_LOG_ID));
         }
         return this.syncLogElement;
     }
@@ -199,7 +199,7 @@ class Log {
         }
     }
     addCountLog(operation, type, max) {
-        const opName = util_1.getOperationDisplayName(operation);
+        const opName = Util_1.getOperationDisplayName(operation);
         const logId = `douki-${operation}-${type}-items`;
         this.info(`${opName} <span id="${logId}">0</span> of ${max} ${type} items.`);
     }
@@ -267,7 +267,7 @@ exports.getOperationDisplayName = (operation) => {
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const const_1 = __webpack_require__(2);
-const util_1 = __webpack_require__(3);
+const Util_1 = __webpack_require__(3);
 const importFormHTML = `
     <div id="${const_1.DOUKI_FORM_ID}">
         <h1 class="h1">Import From Anilist</h1>
@@ -317,14 +317,14 @@ class DomMethods {
         this.dateSetting = null;
     }
     addDropDownItem() {
-        if (document.querySelector(util_1.id(const_1.DROPDOWN_ITEM_ID)))
+        if (document.querySelector(Util_1.id(const_1.DROPDOWN_ITEM_ID)))
             return;
         const selector = '.header-menu-dropdown > ul > li:last-child';
         const dropdown = document.querySelector(selector);
         if (dropdown) {
             const html = `<li><a aria-role="button" id="${const_1.DROPDOWN_ITEM_ID}">Import from Anilist</a></li>`;
             dropdown.insertAdjacentHTML('afterend', html);
-            const link = document.querySelector(util_1.id(const_1.DROPDOWN_ITEM_ID));
+            const link = document.querySelector(Util_1.id(const_1.DROPDOWN_ITEM_ID));
             link && link.addEventListener('click', function (e) {
                 e.preventDefault();
                 window.location.replace('https://myanimelist.net/import.php');
@@ -332,9 +332,9 @@ class DomMethods {
         }
     }
     addImportForm(syncFn) {
-        if (document.querySelector(util_1.id(const_1.DOUKI_FORM_ID)))
+        if (document.querySelector(Util_1.id(const_1.DOUKI_FORM_ID)))
             return;
-        const element = document.querySelector(util_1.id(const_1.CONTENT_ID));
+        const element = document.querySelector(Util_1.id(const_1.CONTENT_ID));
         if (!element) {
             throw new Error('Unable to add form to page');
         }
@@ -343,11 +343,11 @@ class DomMethods {
     }
     // TODO break this up
     addImportFormEventListeners(syncFn) {
-        const importButton = document.querySelector(util_1.id(const_1.DOUKI_IMPORT_BUTTON_ID));
+        const importButton = document.querySelector(Util_1.id(const_1.DOUKI_IMPORT_BUTTON_ID));
         importButton && importButton.addEventListener('click', function (e) {
             syncFn(e);
         });
-        const textBox = document.querySelector(util_1.id(const_1.ANILIST_USERNAME_ID));
+        const textBox = document.querySelector(Util_1.id(const_1.ANILIST_USERNAME_ID));
         textBox && textBox.addEventListener('change', function (e) {
             setLocalStorageSetting(const_1.SETTINGS_KEY, e.target.value);
         });
@@ -355,7 +355,7 @@ class DomMethods {
         if (username && textBox) {
             textBox.value = username;
         }
-        const dateFormatPicker = document.querySelector(util_1.id(const_1.DATE_SETTING_ID));
+        const dateFormatPicker = document.querySelector(Util_1.id(const_1.DATE_SETTING_ID));
         dateFormatPicker && dateFormatPicker.addEventListener('change', function (e) {
             setLocalStorageSetting(const_1.DATE_SETTINGS_KEY, e.target.value);
         });
@@ -363,10 +363,10 @@ class DomMethods {
         if (dateOption && dateFormatPicker) {
             dateFormatPicker.value = dateOption;
         }
-        const errorToggle = document.querySelector(util_1.id(const_1.ERROR_LOG_TOGGLE_ID));
+        const errorToggle = document.querySelector(Util_1.id(const_1.ERROR_LOG_TOGGLE_ID));
         errorToggle && errorToggle.addEventListener('click', function (e) {
             e.preventDefault();
-            const errorLog = document.querySelector(util_1.id(const_1.ERROR_LOG_DIV_ID));
+            const errorLog = document.querySelector(Util_1.id(const_1.ERROR_LOG_DIV_ID));
             if (errorLog.style.display === 'none') {
                 errorLog.style.display = 'block';
             }
@@ -378,7 +378,7 @@ class DomMethods {
     getDateSetting() {
         if (this.dateSetting)
             return this.dateSetting;
-        const dateSetting = document.querySelector(util_1.id(const_1.DATE_SETTING_ID));
+        const dateSetting = document.querySelector(Util_1.id(const_1.DATE_SETTING_ID));
         if (!dateSetting || !dateSetting.value)
             throw new Error('Unable to get date setting');
         this.dateSetting = dateSetting.value;
@@ -553,7 +553,7 @@ exports.getAnilistList = (username) => fetchList(username)
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const util_1 = __webpack_require__(3);
+const Util_1 = __webpack_require__(3);
 const MALEntry_1 = __webpack_require__(7);
 const Log_1 = __webpack_require__(1);
 const Dom_1 = __webpack_require__(4);
@@ -576,13 +576,13 @@ class MAL {
         const nextList = await fetch(`https://myanimelist.net/${type}list/${this.username}/load.json?offset=${offset}&status=7`)
             .then(async (res) => {
             if (res.status !== 200) {
-                await util_1.sleep(2000);
+                await Util_1.sleep(2000);
                 return this.getMALHashMap(type, list, page);
             }
             return res.json();
         });
         if (nextList && nextList.length) {
-            await util_1.sleep(1500);
+            await Util_1.sleep(1500);
             return this.getMALHashMap(type, [...list, ...nextList], page + 1);
         }
         this.Log.info(`Fetched MyAnimeList ${type} list.`);
@@ -644,7 +644,7 @@ class MAL {
         let itemCount = 0;
         const fn = operation === 'add' ? this.malAdd : this.malEdit;
         for (let item of list) {
-            await util_1.sleep(500);
+            await Util_1.sleep(500);
             try {
                 await fn(item);
                 itemCount++;
@@ -756,6 +756,10 @@ class BaseMALEntry {
         return `${day}-${month}-${year}`;
     }
     shouldUpdate() {
+        // If something went wrong or it didn't get added, update will not work
+        if (!this.malData || !this._postData) {
+            return false;
+        }
         return Object.keys(this._postData).some(key => {
             switch (key) {
                 case 'csrf_token':
@@ -976,7 +980,7 @@ exports.MALEntryManga = MALEntryManga;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const util_1 = __webpack_require__(3);
+const Util_1 = __webpack_require__(3);
 class MALForm {
     constructor(type, id) {
         this.document = null;
@@ -1003,7 +1007,7 @@ class MALForm {
         return this.document.querySelector(`#add_${this.type}_${id}`);
     }
     async get() {
-        await util_1.sleep(500);
+        await Util_1.sleep(500);
         const document = await this.fetchDocument(this.type, this.id);
         if (document) {
             this.document = document;
