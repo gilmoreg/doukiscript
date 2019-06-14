@@ -81,8 +81,6 @@ export interface IDomMethods {
 
 export class DomMethods implements IDomMethods {
     csrfToken: string | null = null;
-    dateSetting: string | null = null;
-    debugSetting: boolean | null = null;
 
     addDropDownItem() {
         if (document.querySelector(id(DROPDOWN_ITEM_ID))) return;
@@ -147,19 +145,15 @@ export class DomMethods implements IDomMethods {
     }
 
     getDateSetting(): string {
-        if (this.dateSetting) return this.dateSetting;
         const dateSetting = document.querySelector(id(DATE_SETTING_ID)) as HTMLSelectElement;
         if (!dateSetting || !dateSetting.value) throw new Error('Unable to get date setting');
-        this.dateSetting = dateSetting.value;
-        return this.dateSetting;
+        return dateSetting.value;
     }
 
     getDebugSetting(): boolean {
-        if (this.debugSetting !== null) return this.debugSetting;
         const debugSetting = document.querySelector(id(DEBUG_SETTING_ID)) as HTMLInputElement;
         if (!debugSetting) throw new Error('Unable to get debug setting');
-        this.debugSetting = debugSetting.checked;
-        return this.debugSetting;
+        return debugSetting.checked;
     }
 
     getCSRFToken(): string {

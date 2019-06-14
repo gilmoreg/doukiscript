@@ -343,8 +343,6 @@ const setLocalStorageSetting = (setting, value) => {
 class DomMethods {
     constructor() {
         this.csrfToken = null;
-        this.dateSetting = null;
-        this.debugSetting = null;
     }
     addDropDownItem() {
         if (document.querySelector(Util_1.id(const_1.DROPDOWN_ITEM_ID)))
@@ -406,22 +404,16 @@ class DomMethods {
         });
     }
     getDateSetting() {
-        if (this.dateSetting)
-            return this.dateSetting;
         const dateSetting = document.querySelector(Util_1.id(const_1.DATE_SETTING_ID));
         if (!dateSetting || !dateSetting.value)
             throw new Error('Unable to get date setting');
-        this.dateSetting = dateSetting.value;
-        return this.dateSetting;
+        return dateSetting.value;
     }
     getDebugSetting() {
-        if (this.debugSetting !== null)
-            return this.debugSetting;
         const debugSetting = document.querySelector(Util_1.id(const_1.DEBUG_SETTING_ID));
         if (!debugSetting)
             throw new Error('Unable to get debug setting');
-        this.debugSetting = debugSetting.checked;
-        return this.debugSetting;
+        return debugSetting.checked;
     }
     getCSRFToken() {
         if (this.csrfToken)
