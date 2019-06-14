@@ -1,5 +1,6 @@
-import { SYNC_LOG_ID, ERROR_LOG_ID } from './const';
+import { SYNC_LOG_ID, ERROR_LOG_ID, DEBUG_LOG_ID } from './const';
 import { id, getOperationDisplayName } from './Util';
+import { debug } from 'util';
 
 type NullableElement = HTMLElement | null;
 
@@ -10,6 +11,7 @@ export interface ILog {
     clear(type: string): void
     error(msg: string): void
     info(msg: string): void
+    debug(msg: string): void
     addCountLog(operation: string, type: string, max: number): void
     updateCountLog(operation: string, type: string, count: number): void
 }
@@ -17,6 +19,7 @@ export interface ILog {
 export class Log implements ILog {
     errorLogElement: NullableElement = null;
     syncLogElement: NullableElement = null;
+    debugLogElement: NullableElement = null;
 
     get errorLog() {
         if (!this.errorLogElement) {
@@ -32,6 +35,13 @@ export class Log implements ILog {
         return this.syncLogElement;
     }
 
+    get debugLog() {
+        if (!this.debugLogElement) {
+            this.debugLogElement = document.querySelector(id(DEBUG_LOG_ID));
+        }
+        return this.debugLogElement;
+    }
+
     private clearErrorLog() {
         if (this.errorLog) {
             this.errorLog.innerHTML = '';
@@ -44,10 +54,17 @@ export class Log implements ILog {
         }
     }
 
+    private clearDebugLog() {
+        if (this.debugLog) {
+            this.debugLog.innerHTML = '';
+        }
+    }
+
     clear(type = '') {
         console.clear();
         if (type !== 'error') this.clearSyncLog();
         if (type !== 'sync') this.clearErrorLog();
+        this.clearDebugLog();
     }
 
     error(msg: string) {
@@ -63,6 +80,14 @@ export class Log implements ILog {
             this.syncLog.innerHTML += `<li>${msg}</li>`;
         } else {
             console.info(msg);
+        }
+    }
+
+    debug(msg: string) {
+        if (this.debugLog) {
+            this.debugLog.innerHTML += `<li>${msg}</li>`;
+        } else {
+            console.debug(msg);
         }
     }
 

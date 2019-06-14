@@ -2,7 +2,7 @@
 // @name        Douki
 // @namespace   http://gilmoreg.com
 // @description Import Anime and Manga Lists from Anilist (see https://anilist.co/forum/thread/2654 for more info)
-// @version     0.2.3
+// @version     0.2.4
 // @include     https://myanimelist.net/*
 // ==/UserScript==
 
@@ -152,6 +152,7 @@ class Log {
     constructor() {
         this.errorLogElement = null;
         this.syncLogElement = null;
+        this.debugLogElement = null;
     }
     get errorLog() {
         if (!this.errorLogElement) {
@@ -165,6 +166,12 @@ class Log {
         }
         return this.syncLogElement;
     }
+    get debugLog() {
+        if (!this.debugLogElement) {
+            this.debugLogElement = document.querySelector(Util_1.id(const_1.DEBUG_LOG_ID));
+        }
+        return this.debugLogElement;
+    }
     clearErrorLog() {
         if (this.errorLog) {
             this.errorLog.innerHTML = '';
@@ -175,12 +182,18 @@ class Log {
             this.syncLog.innerHTML = '';
         }
     }
+    clearDebugLog() {
+        if (this.debugLog) {
+            this.debugLog.innerHTML = '';
+        }
+    }
     clear(type = '') {
         console.clear();
         if (type !== 'error')
             this.clearSyncLog();
         if (type !== 'sync')
             this.clearErrorLog();
+        this.clearDebugLog();
     }
     error(msg) {
         if (this.errorLog) {
@@ -196,6 +209,14 @@ class Log {
         }
         else {
             console.info(msg);
+        }
+    }
+    debug(msg) {
+        if (this.debugLog) {
+            this.debugLog.innerHTML += `<li>${msg}</li>`;
+        }
+        else {
+            console.debug(msg);
         }
     }
     addCountLog(operation, type, max) {
@@ -234,6 +255,8 @@ exports.ANILIST_USERNAME_ID = 'douki-anilist-username';
 exports.SETTINGS_KEY = 'douki-settings';
 exports.DATE_SETTINGS_KEY = 'douki-settings-date';
 exports.DROPDOWN_ITEM_ID = 'douki-sync';
+exports.DEBUG_SETTING_ID = 'douki-debug';
+exports.DEBUG_LOG_ID = 'douki-debug-log';
 
 
 /***/ }),
@@ -286,6 +309,9 @@ const importFormHTML = `
                 <option value="e" >European (DD-MM-YY)
                 </select>
             </label>
+            <label>Debug Mode:
+                <input id="${const_1.DEBUG_SETTING_ID}" type="checkbox" name="debug">
+            </label>
             </p>
             <p style="margin: 10px"><button id="${const_1.DOUKI_IMPORT_BUTTON_ID}">Import</button></p>
         </form>
@@ -295,6 +321,9 @@ const importFormHTML = `
         <div id="${const_1.ERROR_LOG_DIV_ID}" style="display: none;">
             <p style="margin: 10px">Anilist does not have a MAL ID for the following items. If a verified MAL entry exists for any of these, contact an Anilist data mod to have it added.</p>
             <ul id="${const_1.ERROR_LOG_ID}" style="list-type: none;"></ul>
+        </div>
+        <div>
+            <ul id="${const_1.DEBUG_LOG_ID}" style="list-type: none;"></ul>
         </div>
     </div>
 `;
@@ -314,7 +343,6 @@ const setLocalStorageSetting = (setting, value) => {
 class DomMethods {
     constructor() {
         this.csrfToken = null;
-        this.dateSetting = null;
     }
     addDropDownItem() {
         if (document.querySelector(Util_1.id(const_1.DROPDOWN_ITEM_ID)))
@@ -376,13 +404,16 @@ class DomMethods {
         });
     }
     getDateSetting() {
-        if (this.dateSetting)
-            return this.dateSetting;
         const dateSetting = document.querySelector(Util_1.id(const_1.DATE_SETTING_ID));
         if (!dateSetting || !dateSetting.value)
             throw new Error('Unable to get date setting');
-        this.dateSetting = dateSetting.value;
-        return this.dateSetting;
+        return dateSetting.value;
+    }
+    getDebugSetting() {
+        const debugSetting = document.querySelector(Util_1.id(const_1.DEBUG_SETTING_ID));
+        if (!debugSetting)
+            throw new Error('Unable to get debug setting');
+        return debugSetting.checked;
     }
     getCSRFToken() {
         if (this.csrfToken)
@@ -682,6 +713,7 @@ exports.default = MAL;
 Object.defineProperty(exports, "__esModule", { value: true });
 const MALForm_1 = __webpack_require__(8);
 const Dom_1 = __webpack_require__(4);
+const Log_1 = __webpack_require__(1);
 exports.createMALEntry = (al, mal, csrfToken, dom) => al.type === 'anime' ?
     new MALEntryAnime(al, mal, csrfToken, dom) :
     new MALEntryManga(al, mal, csrfToken, dom);
@@ -719,12 +751,13 @@ const createMALFormData = (malData) => {
     return formData.replace(/&$/, '');
 };
 class BaseMALEntry {
-    constructor(al, mal, csrfToken = '', dom = Dom_1.default) {
+    constructor(al, mal, csrfToken = '', dom = Dom_1.default, log = Log_1.default) {
         this.alData = al;
         this.malData = mal;
         this.csrfToken = csrfToken;
         this._postData = this.createPostData();
         this.dom = dom;
+        this.log = log;
     }
     createBaseMALPostItem() {
         return {
@@ -760,6 +793,7 @@ class BaseMALEntry {
         if (!this.malData || !this._postData) {
             return false;
         }
+        const debug = this.dom.getDebugSetting();
         return Object.keys(this._postData).some(key => {
             switch (key) {
                 case 'csrf_token':
@@ -775,6 +809,9 @@ class BaseMALEntry {
                         // @ts-ignore
                         const dateString = this.buildDateString(this._postData[key]);
                         if (dateString !== this.malData[`${key}_string`]) {
+                            if (debug) {
+                                this.log.debug(`${this.alData.title}: ${key} differs; MAL ${this.malData[`${key}_string`]} AL ${dateString}`);
+                            }
                             return true;
                         }
                         return false;
@@ -791,6 +828,9 @@ class BaseMALEntry {
                             return false;
                         }
                         if (this._postData[key] !== this.malData[key]) {
+                            if (debug) {
+                                this.log.debug(`${this.alData.title} ${key} differs; MAL ${this.malData[key]} AL ${this._postData[key]}`);
+                            }
                             return true;
                         }
                         return false;
@@ -802,6 +842,9 @@ class BaseMALEntry {
                             return false;
                         }
                         if (this._postData[key] !== this.malData[key]) {
+                            if (debug) {
+                                this.log.debug(`${this.alData.title} ${key} differs; MAL ${this.malData[key]} AL ${this._postData[key]}`);
+                            }
                             return true;
                         }
                         return false;

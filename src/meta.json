@@ -3,7 +3,7 @@
   "name": "Douki",
   "namespace": "http://gilmoreg.com",
   "description": "Import Anime and Manga Lists from Anilist (see https://anilist.co/forum/thread/2654 for more info)",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "include": [
     "https://myanimelist.net/*"
   ]
