@@ -10,6 +10,9 @@ export default class FakeLog implements ILog {
     info(msg: string) {
         console.log('logging info', msg);
     }
+    debug(msg: string) {
+        console.debug('logging debug', msg);
+    }
     addCountLog(op: string, type: string, max: number) {
         console.log('creating count log for', op, type, max);
     }

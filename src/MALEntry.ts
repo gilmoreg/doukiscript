@@ -1,6 +1,7 @@
 import * as T from "./Types";
 import { MALForm } from './MALForm';
 import Dom, { IDomMethods } from "./Dom";
+import Log, { ILog } from './Log';
 
 export const createMALEntry = (al: T.FormattedEntry, mal: T.MALLoadItem, csrfToken: string, dom: IDomMethods) =>
     al.type === 'anime' ?
@@ -60,18 +61,21 @@ export class BaseMALEntry implements MALEntry {
     _postData: T.MALPostItem
     csrfToken: string
     dom: IDomMethods
+    log: ILog
 
     constructor(
         al: T.FormattedEntry,
         mal: T.MALLoadItem,
         csrfToken: string = '',
-        dom: IDomMethods = Dom
+        dom: IDomMethods = Dom,
+        log: ILog = Log
     ) {
         this.alData = al;
         this.malData = mal;
         this.csrfToken = csrfToken;
         this._postData = this.createPostData();
         this.dom = dom;
+        this.log = log;
     }
 
     protected createBaseMALPostItem(): T.MALPostItem {
@@ -109,6 +113,7 @@ export class BaseMALEntry implements MALEntry {
         if (!this.malData || !this._postData) {
             return false;
         }
+        const debug = this.dom.getDebugSetting();
         return Object.keys(this._postData).some(key => {
             switch (key) {
                 case 'csrf_token':
@@ -124,6 +129,9 @@ export class BaseMALEntry implements MALEntry {
                         // @ts-ignore
                         const dateString = this.buildDateString(this._postData[key]);
                         if (dateString !== this.malData[`${key}_string`]) {
+                            if (debug) {
+                                this.log.debug(`${this.alData.title}: ${key} differs; MAL ${this.malData[`${key}_string`]} AL ${dateString}`);
+                            }
                             return true;
                         }
                         return false;
@@ -140,6 +148,9 @@ export class BaseMALEntry implements MALEntry {
                             return false;
                         }
                         if (this._postData[key] !== this.malData[key]) {
+                            if (debug) {
+                                this.log.debug(`${this.alData.title} ${key} differs; MAL ${this.malData[key]} AL ${this._postData[key]}`);
+                            }
                             return true;
                         }
                         return false;
@@ -151,6 +162,9 @@ export class BaseMALEntry implements MALEntry {
                             return false;
                         }
                         if (this._postData[key] !== this.malData[key]) {
+                            if (debug) {
+                                this.log.debug(`${this.alData.title} ${key} differs; MAL ${this.malData[key]} AL ${this._postData[key]}`);
+                            }
                             return true;
                         }
                         return false;

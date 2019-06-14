@@ -11,9 +11,12 @@ import {
     ANILIST_USERNAME_ID,
     SETTINGS_KEY,
     DATE_SETTINGS_KEY,
-    DROPDOWN_ITEM_ID
+    DROPDOWN_ITEM_ID,
+    DEBUG_SETTING_ID,
+    DEBUG_LOG_ID,
 } from './const';
 import { id } from './Util';
+import { debug } from 'util';
 
 const importFormHTML = `
     <div id="${DOUKI_FORM_ID}">
@@ -33,6 +36,9 @@ const importFormHTML = `
                 <option value="e" >European (DD-MM-YY)
                 </select>
             </label>
+            <label>Debug Mode:
+                <input id="${DEBUG_SETTING_ID}" type="checkbox" name="debug">
+            </label>
             </p>
             <p style="margin: 10px"><button id="${DOUKI_IMPORT_BUTTON_ID}">Import</button></p>
         </form>
@@ -42,6 +48,9 @@ const importFormHTML = `
         <div id="${ERROR_LOG_DIV_ID}" style="display: none;">
             <p style="margin: 10px">Anilist does not have a MAL ID for the following items. If a verified MAL entry exists for any of these, contact an Anilist data mod to have it added.</p>
             <ul id="${ERROR_LOG_ID}" style="list-type: none;"></ul>
+        </div>
+        <div>
+            <ul id="${DEBUG_LOG_ID}" style="list-type: none;"></ul>
         </div>
     </div>
 `;
@@ -64,6 +73,7 @@ export interface IDomMethods {
     addDropDownItem(): void
     addImportForm(syncFn: Function): void
     getDateSetting(): string | null
+    getDebugSetting(): boolean | null
     getCSRFToken(): string | null
     getMALUsername(): string | null
     getAnilistUsername(): string | null
@@ -72,6 +82,7 @@ export interface IDomMethods {
 export class DomMethods implements IDomMethods {
     csrfToken: string | null = null;
     dateSetting: string | null = null;
+    debugSetting: boolean | null = null;
 
     addDropDownItem() {
         if (document.querySelector(id(DROPDOWN_ITEM_ID))) return;
@@ -141,6 +152,14 @@ export class DomMethods implements IDomMethods {
         if (!dateSetting || !dateSetting.value) throw new Error('Unable to get date setting');
         this.dateSetting = dateSetting.value;
         return this.dateSetting;
+    }
+
+    getDebugSetting(): boolean {
+        if (this.debugSetting !== null) return this.debugSetting;
+        const debugSetting = document.querySelector(id(DEBUG_SETTING_ID)) as HTMLInputElement;
+        if (!debugSetting) throw new Error('Unable to get debug setting');
+        this.debugSetting = debugSetting.checked;
+        return this.debugSetting;
     }
 
     getCSRFToken(): string {

@@ -16,6 +16,10 @@ export default class FakeDomMethods implements IDomMethods {
         return this.dateSetting;
     };
 
+    getDebugSetting(): boolean {
+        return false;
+    }
+
     getCSRFToken(): string {
         return 'csrfToken';
     }

@@ -11,3 +11,5 @@ export const ANILIST_USERNAME_ID = 'douki-anilist-username';
 export const SETTINGS_KEY = 'douki-settings';
 export const DATE_SETTINGS_KEY = 'douki-settings-date';
 export const DROPDOWN_ITEM_ID = 'douki-sync';
+export const DEBUG_SETTING_ID = 'douki-debug';
+export const DEBUG_LOG_ID = 'douki-debug-log';

@@ -71,6 +71,7 @@ export const createFakeDomMethods = (dateSetting = 'a'): IDomMethods => ({
     addDropDownItem: jest.fn(),
     addImportForm: (syncFn: Function) => jest.fn(),
     getDateSetting: jest.fn().mockImplementation().mockReturnValue(dateSetting),
+    getDebugSetting: jest.fn().mockImplementation().mockReturnValue(false),
     getCSRFToken: () => 'csrfToken',
     getMALUsername: () => 'malUsername',
     getAnilistUsername: () => 'anilistUsername'
