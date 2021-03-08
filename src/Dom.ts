@@ -87,7 +87,7 @@ export class DomMethods implements IDomMethods {
         const selector = '.header-menu-dropdown > ul > li:last-child';
         const dropdown = document.querySelector(selector);
         if (dropdown) {
-            const html = `<li><a aria-role="button" id="${DROPDOWN_ITEM_ID}">Import from Anilist</a></li>`;
+            const html = `<li><a aria-role="button" style="cursor: pointer" id="${DROPDOWN_ITEM_ID}">Import from Anilist</a></li>`;
             dropdown.insertAdjacentHTML('afterend', html);
             const link = document.querySelector(id(DROPDOWN_ITEM_ID));
             link && link.addEventListener('click', function (e) {
