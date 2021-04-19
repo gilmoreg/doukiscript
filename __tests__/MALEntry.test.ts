@@ -2,6 +2,7 @@ import { MALEntryAnime, MALEntryManga } from '../src/MALEntry';
 import * as fakes from '../__testutils__/testData';
 
 jest.mock('../src/Util')
+jest.mock('grecaptcha')
 
 const fakeDomMethods = fakes.createFakeDomMethods();
 
@@ -53,7 +54,7 @@ describe('formData()', () => {
         const malAnime = fakes.createFakeMALAnime();
         const alAnime = fakes.createFakeAnilistAnime();
         const malEntry = new MALEntryAnime(alAnime, malAnime, 'csrfToken', fakeDomMethods);
-        const result = await malEntry.formData();
+        const result = await malEntry.formData('captcha');
         const json = parseFormData(result);
         expect(json).toMatchSnapshot();
         expect(json['add_anime%5Bis_rewatching%5D']).toBeUndefined();
@@ -63,7 +64,7 @@ describe('formData()', () => {
         const malManga = fakes.createFakeMALManga();
         const alManga = fakes.createFakeAnilistManga();
         const malEntry = new MALEntryManga(alManga, malManga, 'csrfToken', fakeDomMethods);
-        const result = await malEntry.formData();
+        const result = await malEntry.formData('captcha');
         const json = parseFormData(result);
         expect(json).toMatchSnapshot();
         expect(json['add_manga%5Bis_rewatching%5D']).toBeUndefined();
@@ -73,7 +74,7 @@ describe('formData()', () => {
         const malAnime = fakes.createFakeMALAnime();
         const alAnime = fakes.createFakeAnilistAnime({ status: 'REPEATING' });
         const malEntry = new MALEntryAnime(alAnime, malAnime, 'csrfToken', fakeDomMethods);
-        const result = await malEntry.formData();
+        const result = await malEntry.formData('captcha');
         const json = parseFormData(result);
         expect(json['add_anime%5Bis_rewatching%5D']).toEqual('1');
     });
@@ -82,7 +83,7 @@ describe('formData()', () => {
         const malManga = fakes.createFakeMALManga();
         const alManga = fakes.createFakeAnilistManga({ status: 'REPEATING' });;
         const malEntry = new MALEntryManga(alManga, malManga, 'csrfToken', fakeDomMethods);
-        const result = await malEntry.formData();
+        const result = await malEntry.formData('captcha');
         const json = parseFormData(result);
         expect(json['add_manga%5Bis_rewatching%5D']).toEqual('1');
     });
