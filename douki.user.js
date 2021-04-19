@@ -6,145 +6,16 @@
 // @include     https://myanimelist.net/*
 // ==/UserScript==
 
-/******/ (function(modules) { // webpackBootstrap
-/******/ 	// The module cache
-/******/ 	var installedModules = {};
-/******/
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/
-/******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId]) {
-/******/ 			return installedModules[moduleId].exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
-/******/ 			i: moduleId,
-/******/ 			l: false,
-/******/ 			exports: {}
-/******/ 		};
-/******/
-/******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
-/******/ 		// Flag the module as loaded
-/******/ 		module.l = true;
-/******/
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/
-/******/
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = modules;
-/******/
-/******/ 	// expose the module cache
-/******/ 	__webpack_require__.c = installedModules;
-/******/
-/******/ 	// define getter function for harmony exports
-/******/ 	__webpack_require__.d = function(exports, name, getter) {
-/******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
-/******/ 		}
-/******/ 	};
-/******/
-/******/ 	// define __esModule on exports
-/******/ 	__webpack_require__.r = function(exports) {
-/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 		}
-/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 	};
-/******/
-/******/ 	// create a fake namespace object
-/******/ 	// mode & 1: value is a module id, require it
-/******/ 	// mode & 2: merge all properties of value into the ns
-/******/ 	// mode & 4: return value when already ns object
-/******/ 	// mode & 8|1: behave like require
-/******/ 	__webpack_require__.t = function(value, mode) {
-/******/ 		if(mode & 1) value = __webpack_require__(value);
-/******/ 		if(mode & 8) return value;
-/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
-/******/ 		var ns = Object.create(null);
-/******/ 		__webpack_require__.r(ns);
-/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
-/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
-/******/ 		return ns;
-/******/ 	};
-/******/
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__webpack_require__.n = function(module) {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			function getDefault() { return module['default']; } :
-/******/ 			function getModuleExports() { return module; };
-/******/ 		__webpack_require__.d(getter, 'a', getter);
-/******/ 		return getter;
-/******/ 	};
-/******/
-/******/ 	// Object.prototype.hasOwnProperty.call
-/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-/******/
-/******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
-/******/
-/******/
-/******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
-/******/ })
-/************************************************************************/
-/******/ ([
-/* 0 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const Log_1 = __webpack_require__(1);
-const Dom_1 = __webpack_require__(4);
-const Anilist_1 = __webpack_require__(5);
-const MAL_1 = __webpack_require__(6);
-// Main business logic
-const sync = async (e) => {
-    e.preventDefault();
-    const anilistUsername = Dom_1.default.getAnilistUsername();
-    if (!anilistUsername)
-        return;
-    const malUsername = Dom_1.default.getMALUsername();
-    if (!malUsername) {
-        Log_1.default.info('You must be logged in!');
-        return;
-    }
-    const csrfToken = Dom_1.default.getCSRFToken();
-    Log_1.default.clear();
-    Log_1.default.info(`Fetching data from Anilist...`);
-    const anilistList = await Anilist_1.getAnilistList(anilistUsername);
-    if (!anilistList) {
-        Log_1.default.info(`No data found for user ${anilistUsername}.`);
-        return;
-    }
-    Log_1.default.info(`Fetched Anilist data.`);
-    const mal = new MAL_1.default(malUsername, csrfToken);
-    await mal.syncType('anime', anilistList.anime);
-    await mal.syncType('manga', anilistList.manga);
-    Log_1.default.info('Import complete.');
-};
-// Entrypoint
-(() => {
-    'use strict';
-    Dom_1.default.addDropDownItem();
-    if (window.location.pathname === '/import.php') {
-        Dom_1.default.addImportForm(sync);
-    }
-})();
-
-
-/***/ }),
+/******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
+/******/ 	var __webpack_modules__ = ([
+/* 0 */,
 /* 1 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Log = void 0;
 const const_1 = __webpack_require__(2);
 const Util_1 = __webpack_require__(3);
 const getCountLog = (operation, type) => document.querySelector(Util_1.id(`douki-${operation}-${type}-items`));
@@ -237,11 +108,11 @@ exports.default = new Log();
 
 /***/ }),
 /* 2 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DEBUG_LOG_ID = exports.DEBUG_SETTING_ID = exports.DROPDOWN_ITEM_ID = exports.DATE_SETTINGS_KEY = exports.SETTINGS_KEY = exports.ANILIST_USERNAME_ID = exports.ERROR_LOG_DIV_ID = exports.ERROR_LOG_TOGGLE_ID = exports.ERROR_LOG_ID = exports.SYNC_LOG_ID = exports.DOUKI_IMPORT_BUTTON_ID = exports.CONTENT_ID = exports.DATE_SETTING_ID = exports.DOUKI_ANILIST_IMPORT_ID = exports.DOUKI_FORM_ID = void 0;
 exports.DOUKI_FORM_ID = 'douki-form';
 exports.DOUKI_ANILIST_IMPORT_ID = 'douki-anilist-import';
 exports.DATE_SETTING_ID = 'douki-date_format';
@@ -261,14 +132,16 @@ exports.DEBUG_LOG_ID = 'douki-debug-log';
 
 /***/ }),
 /* 3 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
 
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.sleep = (ms) => new Promise(resolve => setTimeout(() => resolve(), ms));
-exports.id = (str) => `#${str}`;
-exports.getOperationDisplayName = (operation) => {
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getOperationDisplayName = exports.id = exports.sleep = void 0;
+const sleep = (ms) => new Promise(resolve => setTimeout(() => resolve(null), ms));
+exports.sleep = sleep;
+const id = (str) => `#${str}`;
+exports.id = id;
+const getOperationDisplayName = (operation) => {
     switch (operation) {
         case 'add':
             return 'Adding';
@@ -280,15 +153,16 @@ exports.getOperationDisplayName = (operation) => {
             throw new Error('Unknown operation type');
     }
 };
+exports.getOperationDisplayName = getOperationDisplayName;
 
 
 /***/ }),
 /* 4 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DomMethods = void 0;
 const const_1 = __webpack_require__(2);
 const Util_1 = __webpack_require__(3);
 const importFormHTML = `
@@ -446,11 +320,11 @@ exports.default = new DomMethods();
 
 /***/ }),
 /* 5 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getAnilistList = void 0;
 const Log_1 = __webpack_require__(1);
 const flatten = (obj) => 
 // Outer reduce concats arrays built by inner reduce
@@ -566,7 +440,7 @@ const filterNoMalId = (item) => {
     Log_1.default.error(`${item.type}: ${item.title}`);
     return false;
 };
-exports.getAnilistList = (username) => fetchList(username)
+const getAnilistList = (username) => fetchList(username)
     .then(lists => ({
     anime: lists.anime
         .map(item => sanitize(item, 'anime'))
@@ -575,15 +449,15 @@ exports.getAnilistList = (username) => fetchList(username)
         .map(item => sanitize(item, 'manga'))
         .filter(item => filterNoMalId(item)),
 }));
+exports.getAnilistList = getAnilistList;
 
 
 /***/ }),
 /* 6 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", ({ value: true }));
 const Util_1 = __webpack_require__(3);
 const MALEntry_1 = __webpack_require__(7);
 const Log_1 = __webpack_require__(1);
@@ -623,9 +497,9 @@ class MAL {
         const malHashMap = await this.getMALHashMap(type);
         return anilistList.map(entry => MALEntry_1.createMALEntry(entry, malHashMap[entry.id], this.csrfToken, this.dom));
     }
-    async malEdit(data) {
+    async malEdit(data, captcha) {
         const { type, id } = data;
-        const formData = await data.formData();
+        const formData = await data.formData(captcha);
         return fetch(`https://myanimelist.net/ownlist/${type}/${id}/edit?hideLayout`, {
             credentials: 'include',
             headers: {
@@ -651,7 +525,7 @@ class MAL {
             throw new Error(`Error updating ${type} id ${id}`);
         });
     }
-    malAdd(data) {
+    async malAdd(data, captcha) {
         return fetch(`https://myanimelist.net/ownlist/${data.type}/add.json`, {
             method: 'post',
             headers: {
@@ -659,7 +533,7 @@ class MAL {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                 'x-requested-with': 'XMLHttpRequest'
             },
-            body: JSON.stringify(data.postData)
+            body: JSON.stringify(Object.assign(Object.assign({}, data.postData), { 'g-recaptcha-response': captcha }))
         })
             .then((res) => {
             if (res.status === 200)
@@ -676,8 +550,11 @@ class MAL {
         const fn = operation === 'add' ? this.malAdd : this.malEdit;
         for (let item of list) {
             await Util_1.sleep(500);
+            const captcha = await grecaptcha.execute("6Ld_1aIZAAAAAF6bNdR67ICKIaeXLKlbhE7t2Qz4", {
+                action: "social"
+            });
             try {
-                await fn(item);
+                await fn(item, captcha);
                 itemCount++;
                 this.Log.updateCountLog(operation, type, itemCount);
             }
@@ -706,17 +583,18 @@ exports.default = MAL;
 
 /***/ }),
 /* 7 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MALEntryManga = exports.MALEntryAnime = exports.BaseMALEntry = exports.createMALEntry = void 0;
 const MALForm_1 = __webpack_require__(8);
 const Dom_1 = __webpack_require__(4);
 const Log_1 = __webpack_require__(1);
-exports.createMALEntry = (al, mal, csrfToken, dom) => al.type === 'anime' ?
+const createMALEntry = (al, mal, csrfToken, dom) => al.type === 'anime' ?
     new MALEntryAnime(al, mal, csrfToken, dom) :
     new MALEntryManga(al, mal, csrfToken, dom);
+exports.createMALEntry = createMALEntry;
 const MALStatus = {
     Current: 1,
     Completed: 2,
@@ -855,7 +733,7 @@ class BaseMALEntry {
     shouldAdd() {
         return !this.malData;
     }
-    formData() {
+    formData(captcha) {
         throw new Error("Method not implemented.");
     }
     createPostData() {
@@ -907,7 +785,7 @@ class MALEntryAnime extends BaseMALEntry {
         result.num_watched_episodes = Math.min(this.alData.progress, this.malData.anime_num_episodes);
         return result;
     }
-    async formData() {
+    async formData(captcha) {
         const malFormData = new MALForm_1.MALForm(this.alData.type, this.alData.id);
         await malFormData.get();
         const formData = {
@@ -932,6 +810,7 @@ class MALEntryAnime extends BaseMALEntry {
             'add_anime[comments]': malFormData.comments,
             'add_anime[is_asked_to_discuss]': malFormData.discussionSetting,
             'add_anime[sns_post_type]': malFormData.SNSSetting,
+            'g-recaptcha-response': captcha,
             submitIt: 0,
             csrf_token: this.csrfToken,
         };
@@ -978,7 +857,7 @@ class MALEntryManga extends BaseMALEntry {
         result.num_read_volumes = Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes);
         return result;
     }
-    async formData() {
+    async formData(captcha) {
         const malFormData = new MALForm_1.MALForm(this.alData.type, this.alData.id);
         await malFormData.get();
         const formData = {
@@ -1004,6 +883,7 @@ class MALEntryManga extends BaseMALEntry {
             'add_manga[comments]': malFormData.comments,
             'add_manga[is_asked_to_discuss]': malFormData.discussionSetting,
             'add_manga[sns_post_type]': malFormData.SNSSetting,
+            'g-recaptcha-response': captcha,
             csrf_token: this.csrfToken,
             submitIt: 0
         };
@@ -1018,11 +898,11 @@ exports.MALEntryManga = MALEntryManga;
 
 /***/ }),
 /* 8 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
-"use strict";
 
-Object.defineProperty(exports, "__esModule", { value: true });
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.MALForm = void 0;
 const Util_1 = __webpack_require__(3);
 class MALForm {
     constructor(type, id) {
@@ -1118,4 +998,78 @@ exports.MALForm = MALForm;
 
 
 /***/ })
-/******/ ]);
+/******/ 	]);
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/************************************************************************/
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
+(() => {
+var exports = __webpack_exports__;
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const Log_1 = __webpack_require__(1);
+const Dom_1 = __webpack_require__(4);
+const Anilist_1 = __webpack_require__(5);
+const MAL_1 = __webpack_require__(6);
+// Main business logic
+const sync = async (e) => {
+    e.preventDefault();
+    const anilistUsername = Dom_1.default.getAnilistUsername();
+    if (!anilistUsername)
+        return;
+    const malUsername = Dom_1.default.getMALUsername();
+    if (!malUsername) {
+        Log_1.default.info('You must be logged in!');
+        return;
+    }
+    const csrfToken = Dom_1.default.getCSRFToken();
+    Log_1.default.clear();
+    Log_1.default.info(`Fetching data from Anilist...`);
+    const anilistList = await Anilist_1.getAnilistList(anilistUsername);
+    if (!anilistList) {
+        Log_1.default.info(`No data found for user ${anilistUsername}.`);
+        return;
+    }
+    Log_1.default.info(`Fetched Anilist data.`);
+    const mal = new MAL_1.default(malUsername, csrfToken);
+    await mal.syncType('anime', anilistList.anime);
+    await mal.syncType('manga', anilistList.manga);
+    Log_1.default.info('Import complete.');
+};
+// Entrypoint
+(() => {
+    'use strict';
+    Dom_1.default.addDropDownItem();
+    if (window.location.pathname === '/import.php') {
+        Dom_1.default.addImportForm(sync);
+    }
+})();
+
+})();
+
+/******/ })()
+;
