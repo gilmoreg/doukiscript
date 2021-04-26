@@ -2,7 +2,7 @@
 // @name        Douki
 // @namespace   http://gilmoreg.com
 // @description Import Anime and Manga Lists from Anilist (see https://anilist.co/forum/thread/2654 for more info)
-// @version     0.2.4
+// @version     0.2.5
 // @include     https://myanimelist.net/*
 // ==/UserScript==
 
@@ -497,9 +497,9 @@ class MAL {
         const malHashMap = await this.getMALHashMap(type);
         return anilistList.map(entry => MALEntry_1.createMALEntry(entry, malHashMap[entry.id], this.csrfToken, this.dom));
     }
-    async malEdit(data, captcha) {
+    async malEdit(data) {
         const { type, id } = data;
-        const formData = await data.formData(captcha);
+        const formData = await data.formData();
         return fetch(`https://myanimelist.net/ownlist/${type}/${id}/edit?hideLayout`, {
             credentials: 'include',
             headers: {
@@ -525,7 +525,7 @@ class MAL {
             throw new Error(`Error updating ${type} id ${id}`);
         });
     }
-    async malAdd(data, captcha) {
+    malAdd(data) {
         return fetch(`https://myanimelist.net/ownlist/${data.type}/add.json`, {
             method: 'post',
             headers: {
@@ -533,7 +533,7 @@ class MAL {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                 'x-requested-with': 'XMLHttpRequest'
             },
-            body: JSON.stringify(Object.assign(Object.assign({}, data.postData), { 'g-recaptcha-response': captcha }))
+            body: JSON.stringify(data.postData)
         })
             .then((res) => {
             if (res.status === 200)
@@ -550,11 +550,8 @@ class MAL {
         const fn = operation === 'add' ? this.malAdd : this.malEdit;
         for (let item of list) {
             await Util_1.sleep(500);
-            const captcha = await grecaptcha.execute("6Ld_1aIZAAAAAF6bNdR67ICKIaeXLKlbhE7t2Qz4", {
-                action: "social"
-            });
             try {
-                await fn(item, captcha);
+                await fn(item);
                 itemCount++;
                 this.Log.updateCountLog(operation, type, itemCount);
             }
@@ -733,7 +730,7 @@ class BaseMALEntry {
     shouldAdd() {
         return !this.malData;
     }
-    formData(captcha) {
+    formData() {
         throw new Error("Method not implemented.");
     }
     createPostData() {
@@ -785,7 +782,7 @@ class MALEntryAnime extends BaseMALEntry {
         result.num_watched_episodes = Math.min(this.alData.progress, this.malData.anime_num_episodes);
         return result;
     }
-    async formData(captcha) {
+    async formData() {
         const malFormData = new MALForm_1.MALForm(this.alData.type, this.alData.id);
         await malFormData.get();
         const formData = {
@@ -810,7 +807,6 @@ class MALEntryAnime extends BaseMALEntry {
             'add_anime[comments]': malFormData.comments,
             'add_anime[is_asked_to_discuss]': malFormData.discussionSetting,
             'add_anime[sns_post_type]': malFormData.SNSSetting,
-            'g-recaptcha-response': captcha,
             submitIt: 0,
             csrf_token: this.csrfToken,
         };
@@ -857,7 +853,7 @@ class MALEntryManga extends BaseMALEntry {
         result.num_read_volumes = Math.min(this.alData.progressVolumes, this.malData.manga_num_volumes);
         return result;
     }
-    async formData(captcha) {
+    async formData() {
         const malFormData = new MALForm_1.MALForm(this.alData.type, this.alData.id);
         await malFormData.get();
         const formData = {
@@ -883,7 +879,6 @@ class MALEntryManga extends BaseMALEntry {
             'add_manga[comments]': malFormData.comments,
             'add_manga[is_asked_to_discuss]': malFormData.discussionSetting,
             'add_manga[sns_post_type]': malFormData.SNSSetting,
-            'g-recaptcha-response': captcha,
             csrf_token: this.csrfToken,
             submitIt: 0
         };

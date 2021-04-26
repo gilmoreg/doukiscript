@@ -24,7 +24,6 @@ Object {
   "anime_id": "1",
   "astatus": "2",
   "csrf_token": "csrfToken",
-  "g-recaptcha-response": "captcha",
   "submitIt": "0",
 }
 `;
@@ -52,7 +51,6 @@ Object {
   "add_manga%5Btags%5D": "",
   "csrf_token": "csrfToken",
   "entry_id": "0",
-  "g-recaptcha-response": "captcha",
   "last_completed_vol": "",
   "manga_id": "2",
   "submitIt": "0",

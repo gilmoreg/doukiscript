@@ -4,8 +4,7 @@ import * as fetchMock from 'fetch-mock';
 import * as fakes from '../__testutils__/testData';
 import MockMAL from '../__mocks__/src/MockMAL';
 
-jest.mock('../src/Util');
-jest.mock('grecaptcha');
+jest.mock('../src/Util')
 
 const createFakeMAL = () => new MAL('test', 'csrfToken', new FakeLog(), fakes.createFakeDomMethods());
 

@@ -48,7 +48,7 @@ const createMALFormData = (malData: T.MALFormData): string => {
 export interface MALEntry {
     shouldUpdate(): boolean
     shouldAdd(): boolean
-    formData(captcha: string): Promise<string>
+    formData(): Promise<string>
     type: string
     id: number
     title: string
@@ -177,7 +177,7 @@ export class BaseMALEntry implements MALEntry {
         return !this.malData;
     }
 
-    formData(captcha: string): Promise<string> {
+    formData(): Promise<string> {
         throw new Error("Method not implemented.");
     }
     protected createPostData(): T.MALPostItem {
@@ -242,7 +242,7 @@ export class MALEntryAnime extends BaseMALEntry {
         return result;
     }
 
-    async formData(captcha: string): Promise<string> {
+    async formData(): Promise<string> {
         const malFormData = new MALForm(this.alData.type, this.alData.id);
         await malFormData.get();
         const formData = {
@@ -267,7 +267,6 @@ export class MALEntryAnime extends BaseMALEntry {
             'add_anime[comments]': malFormData.comments,
             'add_anime[is_asked_to_discuss]': malFormData.discussionSetting,
             'add_anime[sns_post_type]': malFormData.SNSSetting,
-            'g-recaptcha-response': captcha,
             submitIt: 0,
             csrf_token: this.csrfToken,
         } as T.MALFormData;
@@ -326,7 +325,7 @@ export class MALEntryManga extends BaseMALEntry {
         return result;
     }
 
-    async formData(captcha: string): Promise<string> {
+    async formData(): Promise<string> {
         const malFormData = new MALForm(this.alData.type, this.alData.id);
         await malFormData.get();
         const formData = {
@@ -352,7 +351,6 @@ export class MALEntryManga extends BaseMALEntry {
             'add_manga[comments]': malFormData.comments,
             'add_manga[is_asked_to_discuss]': malFormData.discussionSetting,
             'add_manga[sns_post_type]': malFormData.SNSSetting,
-            'g-recaptcha-response': captcha,
             csrf_token: this.csrfToken,
             submitIt: 0
         } as T.MALFormData;
