@@ -1,6 +1,10 @@
 import * as fetch from 'node-fetch';
+import mockGrecaptcha from '../__mocks__/grecaptcha';
+
 // @ts-ignore
 global.fetch = fetch;
+// @ts-ignore
+global.grecaptcha = mockGrecaptcha;
 
 /*
 NodeJS.Global.setTimeout: (callback: (...args: any[]) => void, ms: number, ...args: any[]) => NodeJS.Timer
