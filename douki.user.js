@@ -224,7 +224,7 @@ class DomMethods {
         const selector = '.header-menu-dropdown > ul > li:last-child';
         const dropdown = document.querySelector(selector);
         if (dropdown) {
-            const html = `<li><a aria-role="button" id="${const_1.DROPDOWN_ITEM_ID}">Import from Anilist</a></li>`;
+            const html = `<li><a aria-role="button" style="cursor: pointer" id="${const_1.DROPDOWN_ITEM_ID}">Import from Anilist</a></li>`;
             dropdown.insertAdjacentHTML('afterend', html);
             const link = document.querySelector(Util_1.id(const_1.DROPDOWN_ITEM_ID));
             link && link.addEventListener('click', function (e) {
