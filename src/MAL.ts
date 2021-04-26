@@ -48,9 +48,9 @@ export default class MAL {
         return anilistList.map(entry => createMALEntry(entry, malHashMap[entry.id], this.csrfToken, this.dom));
     }
 
-    private async malEdit(data: MALEntry, captcha: string) {
+    private async malEdit(data: MALEntry) {
         const { type, id } = data;
-        const formData = await data.formData(captcha);
+        const formData = await data.formData();
         return fetch(`https://myanimelist.net/ownlist/${type}/${id}/edit?hideLayout`,
             {
                 credentials: 'include',
@@ -76,7 +76,7 @@ export default class MAL {
             });
     }
 
-    private async malAdd(data: MALEntry, captcha: string) {
+    private malAdd(data: MALEntry) {
         return fetch(`https://myanimelist.net/ownlist/${data.type}/add.json`, {
             method: 'post',
             headers: {
@@ -84,7 +84,7 @@ export default class MAL {
                 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
                 'x-requested-with': 'XMLHttpRequest'
             },
-            body: JSON.stringify({ ...data.postData, 'g-recaptcha-response': captcha })
+            body: JSON.stringify(data.postData)
         })
             .then((res) => {
                 if (res.status === 200) return res;
@@ -101,12 +101,8 @@ export default class MAL {
         const fn = operation === 'add' ? this.malAdd : this.malEdit;
         for (let item of list) {
             await sleep(500);
-            // @ts-ignore
-            const captcha = await grecaptcha.execute("6Ld_1aIZAAAAAF6bNdR67ICKIaeXLKlbhE7t2Qz4", {
-                action: "social"
-            });
             try {
-                await fn(item, captcha);
+                await fn(item);
                 itemCount++;
                 this.Log.updateCountLog(operation, type, itemCount);
             } catch (e) {

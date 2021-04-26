@@ -16,6 +16,7 @@ import {
     DEBUG_LOG_ID,
 } from './const';
 import { id } from './Util';
+import { debug } from 'util';
 
 const importFormHTML = `
     <div id="${DOUKI_FORM_ID}">
