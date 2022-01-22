@@ -25,7 +25,7 @@
     "fetch-mock": "^7.2.8",
     "jest": "^24.8.0",
     "jsonschema": "^1.1.1",
-    "node-fetch": "^2.3.0",
+    "node-fetch": "^3.1.1",
     "pad": "^1.1.0",
     "style-loader": "^0.18.2",
     "ts-jest": "^23.10.5",
