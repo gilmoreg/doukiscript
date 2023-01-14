@@ -33,7 +33,7 @@
     "ts-node": "^7.0.1",
     "typescript": "^2.9.2",
     "webpack": "^4.28.3",
-    "webpack-cli": "^3.1.2"
+    "webpack-cli": "^3.3.12"
   },
   "jest": {
     "roots": [
