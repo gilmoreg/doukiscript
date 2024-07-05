@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        Douki
-// @namespace   http://gilmoreg.com
+// @namespace   douki-e7d98778-9b83-45eb-a189-456bd1ce2ee1
 // @description Import Anime and Manga Lists from Anilist (see https://anilist.co/forum/thread/2654 for more info)
 // @version     0.2.5
 // @include     https://myanimelist.net/*
